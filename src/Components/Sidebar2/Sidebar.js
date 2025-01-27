@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { styled } from '@mui/material/styles';
-import { AppBar, Toolbar, Typography, Box, InputBase, Button, IconButton, Divider } from '@mui/material';
+import { Typography, Box,  IconButton, Divider } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import { RiMenuUnfold3Fill } from "react-icons/ri";
 import { RiMenuFold3Fill } from "react-icons/ri";
-import Header from '../Header/Header';
-import SidebarItems from './SidebarItems';
+import SidebarItems from './SidebarItems2';
 import { navigationData } from './Demo'; // Correct import
 
 

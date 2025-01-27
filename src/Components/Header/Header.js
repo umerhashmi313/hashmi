@@ -17,6 +17,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'; // Added missing 
 // Renamed styled component to avoid conflict
 const StyledHeader = styled(AppBar)(({ theme }) => ({
   backgroundColor: '#ffffff',
+  height:'60px',
   color: '#000',
   boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
   zIndex: 1,
@@ -25,7 +26,7 @@ const StyledHeader = styled(AppBar)(({ theme }) => ({
 const CollectButton = styled(Button)(({ theme }) => ({
   borderRadius: '30px',
   height: '33px',
-  backgroundColor: '#001f3f',
+  backgroundColor: '#03162A',
   color: '#ffffff',
   '&:hover': {
     backgroundColor: '#333',
@@ -49,11 +50,13 @@ function Header() {
             display="flex"
             alignItems="center"
             sx={{
-              bgcolor: '#f5f5f5',
+              bgcolor: 'white',
               p: 1,
-              height: '23px',
-              width: '250px',
+              mb :1,
+              height: '15px',
+              width: '239px',
               borderRadius: 5,
+              
               boxShadow: '0 5px 4px rgba(0,0,0,0.2)',
             }}
           >
@@ -63,7 +66,7 @@ function Header() {
           <CollectButton
             variant="contained"
             startIcon={<EmojiEventsIcon sx={{ color: 'gold' }} />}
-            sx={{ ml: 2, mr: 1.5 }}
+            sx={{ ml: 2, mr: 1.5  , mb: .7}}
           >
             Collect Rewards
           </CollectButton>

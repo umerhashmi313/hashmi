@@ -1,9 +1,10 @@
 import {
-    Score,
     CheckCircle,
     AccessTimeFilled,
+    Star,
   } from '@mui/icons-material';
   import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
+
 
 
 export const dashboardData = {
@@ -23,7 +24,7 @@ export const dashboardData = {
             },
              Score: {
                 Text: '10/24',
-                icon: Score
+                icon: Star
             }
         },
         
