@@ -1,46 +1,52 @@
-// Demo.js
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PagesIcon from '@mui/icons-material/Pages';
-import SchoolIcon from '@mui/icons-material/School';
-import AnnouncementIcon from '@mui/icons-material/Announcement';
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
+import QuizIcon from '@mui/icons-material/Quiz';
+import BookmarksIcon from '@mui/icons-material/Bookmarks';
 
 export const navigationData = {
     Navigation: {
-                    'MDCAT English' : {
-            Dashboard: {
+      'Chapter 1': {
+        topics: {
+          'Topic 1': {
+            items: {
+              'Topic 1 Video': {
                 url: '',
-                icon: 'Dashboard'
-            },
-            Page: {
+                icon: PlayCircleIcon,
+              },
+              'Topic 1 Quiz': {
                 url: 'www.page',
-                icon: PagesIcon
-            },
-            Courses: {
+                icon: QuizIcon,
+              },
+              'Topic 1 Notes': {
                 url: 'www.Temporary',
-                icon: SchoolIcon
+                icon: BookmarksIcon,
+              },
             },
-            Announcements: {
-                url: 'www.Permanent',
-                icon: AnnouncementIcon
-            }
+          },
+          'Topic 2': {
+            items: {
+              'Topic 2 Video': {
+                url: '',
+                icon: PlayCircleIcon,
+              },
+              'Topic 2 Quiz': {
+                url: 'www.page',
+                icon: QuizIcon,
+              },
+              'Topic 2 Notes': {
+                url: 'www.Temporary',
+                icon: BookmarksIcon,
+              },
+            },
+          },
         },
-        Instructor: {
-            Dashboard: {
-                url: '',
-                icon: DashboardIcon
-            },
-            Page: {
-                url: '',
-                icon: PagesIcon
-            },
-            Courses: {
-                url: '',
-                icon: SchoolIcon
-            },
-            Announcements: {
-                url: '',
-                icon: AnnouncementIcon
-            }
-        }
-    }
-};
+      },
+    },
+    AdditionalSections: {
+      'Chapter1 Quiz': {
+        icon: QuizIcon,
+      },
+      'Chapter1 Notes': {
+        icon: BookmarksIcon,
+      },
+    },
+  };

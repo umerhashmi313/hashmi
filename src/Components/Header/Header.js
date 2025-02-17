@@ -7,19 +7,20 @@ import {
   InputBase,
   IconButton,
   Button,
-  styled
+  styled,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'; // Added missing import
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
-// Renamed styled component to avoid conflict
 const StyledHeader = styled(AppBar)(({ theme }) => ({
   backgroundColor: '#ffffff',
-  height:'60px',
+  height: 'auto',
   color: '#000',
-  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+  boxShadow: 'none',
   zIndex: 1,
 }));
 
@@ -39,37 +40,56 @@ const ProfileIcon = styled(AccountCircleIcon)(({ theme }) => ({
 }));
 
 function Header() {
+  const theme = useTheme();
+  const isMobileView = useMediaQuery(theme.breakpoints.down(1145)); // Adjust breakpoint for 1145px
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down(722)); // Adjust breakpoint for 722px
+
   return (
     <StyledHeader position="sticky">
       <Toolbar>
-        <Typography variant="h5" fontWeight="bold" fontSize="30px" sx={{ flexGrow: 1, ml: '20px' }}>
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          sx={{
+            flexGrow: 1,
+            ml: '20px',
+            fontSize: isSmallScreen ? '20px' : '30px', // Adjust font size conditionally
+          }}
+        >
           Course Dashboard
         </Typography>
         <Box display="flex" alignItems="center">
-          <Box
-            display="flex"
-            alignItems="center"
-            sx={{
-              bgcolor: 'white',
-              p: 1,
-              mb :1,
-              height: '15px',
-              width: '239px',
-              borderRadius: 5,
-              
-              boxShadow: '0 5px 4px rgba(0,0,0,0.2)',
-            }}
-          >
-            <InputBase placeholder="Search…" sx={{ ml: 1, flex: 1 }} />
-            <SearchIcon />
-          </Box>
-          <CollectButton
-            variant="contained"
-            startIcon={<EmojiEventsIcon sx={{ color: 'gold' }} />}
-            sx={{ ml: 2, mr: 1.5  , mb: .7}}
-          >
-            Collect Rewards
-          </CollectButton>
+          {!isMobileView && (
+            <Box
+              display="flex"
+              alignItems="center"
+              sx={{
+                bgcolor: 'white',
+                p: 1,
+                mb: 1,
+                height: '15px',
+                width: '239px',
+                borderRadius: 5,
+              }}
+            >
+              <InputBase placeholder="Search…" sx={{ ml: 1, flex: 1 }} />
+              <SearchIcon />
+            </Box>
+          )}
+          {isMobileView ? (
+            <IconButton sx={{ color: '#000' }}>
+              <SearchIcon />
+              <EmojiEventsIcon sx={{color:'gold', ml: 1}}/>
+            </IconButton>
+          ) : (
+            <CollectButton
+              variant="contained"
+              startIcon={<EmojiEventsIcon sx={{ color: 'gold' }} />}
+              sx={{ ml: 2, mr: 1.5, mb: 0.7 }}
+            >
+              Collect Rewards
+            </CollectButton>
+          )}
           <IconButton sx={{ color: '#000' }}>
             <NotificationsIcon />
           </IconButton>

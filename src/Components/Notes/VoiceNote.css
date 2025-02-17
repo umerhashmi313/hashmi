@@ -1,0 +1,40 @@
+.voice-note-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #f1f3f4;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .play-pause-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #0078d4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .waveform {
+    flex: 1;
+    height: 60px; /* Adjust height as needed */
+  }
+  
+  .timer {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  
+
+  

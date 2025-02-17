@@ -6,22 +6,18 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import { RiMenuUnfold3Fill } from "react-icons/ri";
 import { RiMenuFold3Fill } from "react-icons/ri";
 import SidebarItems from './SidebarItems2';
-import { navigationData } from './Demo'; // Correct import
+import { navigationData } from './Demo2'; // Correct import
 
 
 const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
   backgroundColor: '#03162A',
   color: '#ffffff',
-  height: '100vh',
-  width: sidebarOpen ? '17%' : '5%',
+  minHeight: '100vh',
+  width: sidebarOpen ? '235px' : '60px',
   transition: 'width 0.3s ease',
   display: 'flex',
   flexDirection: 'column',
-  position: 'fixed', // Changed from relative
-  top: 0,
-  left: 0,
-  zIndex: 1200, // Ensure sidebar stays above other content
-  overflowY: 'auto', // Add scroll for sidebar if content overflows
+  overflowX: 'hidden', // Add scroll for sidebar if content overflows
 
 }));
 
@@ -31,7 +27,7 @@ const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
 const SidebarToggle = styled(IconButton)(({ sidebarOpen }) => ({
   position: 'fixed',
   top: '20px',
-  left: sidebarOpen ? 'calc(17% - 20px)' : '16px', // Adjusted right position
+  left: sidebarOpen ? 'calc(234px - 20px)' : '13px', // Adjusted right position
   backgroundColor: '#ffffff',
   color: '#000',
   borderRadius: '20%',
@@ -61,11 +57,7 @@ const SidebarItem = styled(Box)(({ theme }) => ({
 }));
 
 const SidebarItemNoHover = styled(SidebarItem)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-
-
-  backgroundColor: ' #03162A',
+    backgroundColor: ' #03162A',
   transition: 'transform 0.3s ease, background-color 0.3s ease', // Smooth transition for transform and background
   '&:hover': {
     transform: 'none', // Remove any hover transformation
@@ -118,9 +110,9 @@ const SidebarItemFooter = styled(SidebarItem)(({ theme }) => ({
   },
 }));
 
-export default function Sidebar({ sidebarOpen, toggleSidebar }) {
+export default function Sidebar2({ sidebarOpen, toggleSidebar ,  onLogout }) {
   return (
-    <Box display="flex">
+    <Box display="flex" >
       {/* Sidebar */}
       <SidebarContainer sidebarOpen={sidebarOpen}>
         <SidebarToggle sidebarOpen={sidebarOpen} onClick={toggleSidebar}>
@@ -128,25 +120,40 @@ export default function Sidebar({ sidebarOpen, toggleSidebar }) {
         </SidebarToggle>
         {sidebarOpen && (
           <>
-            <SidebarItemNoHover sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 5 }}>
-              <img
-                src="/insighticon.png" // Adjust path if the file is in a subfolder
-                alt="Insight Icon"
-                style={{
-                  width: '150px', // Adjust width
-                  height: 'auto', // Maintain aspect ratio
-                }}
-              />
-            </SidebarItemNoHover>
+          <SidebarItemNoHover 
+  sx={{ 
+    display: 'flex',
+    flexDirection:'row',
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    width: '100%', // Takes the full width of the sidebar
+    height: 'auto', // Ensures height adjusts to fit the content
+    paddingLeft:'0',
+    paddingRight:'20px',
+    paddingTop:'18px',
+    paddingBottom:'12px'
+
+  }}
+>
+  <img
+    src="/insighticon.png" // Adjust path if the file is in a subfolder
+    alt="Insight Icon"
+    style={{
+      width: '132px', // Width for the image
+      height: '46px', // Height for the image
+    }}
+  />
+</SidebarItemNoHover>
+
  <BlackDivider />
    <SidebarItems/>
    <FooterSection>
   <Black2Divider />
-  {[
+  {[ 
     { icon: SettingsIcon, text: 'Settings' },
-    { icon: ExitToAppIcon, text: 'Logout' }
+    { icon: ExitToAppIcon, text: 'Logout', onClick: onLogout } // Add onClick handler for logout
   ].map((item, index) => (
-    <SidebarItemFooter key={index}>
+    <SidebarItemFooter key={index} onClick={item.onClick}>
       <SidebarIcon>
         <item.icon />
       </SidebarIcon>
@@ -156,34 +163,38 @@ export default function Sidebar({ sidebarOpen, toggleSidebar }) {
     </SidebarItemFooter>
   ))}
 </FooterSection>
+
           </>
         )}
-        {!sidebarOpen && (
+       {!sidebarOpen && (
   <>
-    {/* Main Navigation Icons */}
-    {Object.entries(navigationData.Navigation.Students).map(([key, item], index) => (
-      <SidebarItem 
-        key={key}
-        sx={{ 
-          ml: '-3px',
-          mt: index === 0 ? '60px' : undefined 
-        }}
-      >
-        <SidebarIcon>
-          <item.icon />
-        </SidebarIcon>
-      </SidebarItem>
-    ))}
+    {/* Main Navigation Icons
+    {Object.entries(navigationData.Navigation).map(([sectionName, sectionItems]) => (
+      Object.entries(sectionItems).map(([key, item], index) => (
+        <SidebarItem 
+          key={key}
+          sx={{ 
+            ml: '-3px',
+            mt: index === 0 ? '60px' : undefined 
+          }}
+        >
+          <SidebarIcon>
+            <item.icon />
+          </SidebarIcon>
+        </SidebarItem>
+      ))
+    ))} */}
 
     {/* Footer Icons - Pushed to bottom */}
-    <Box sx={{ marginTop: 'auto' }}>
+    <Box sx={{ marginTop: 'auto' ,
+     }}>
       {[
         { icon: SettingsIcon, text: 'Settings' },
         { icon: ExitToAppIcon, text: 'Logout' }
       ].map((item, index) => (
         <SidebarItem 
           key={`footer-${index}`}
-          sx={{ ml: '-3px' , mb:'10px' , gap:'3px' }}
+          sx={{ ml: '-3px', mb:'10px', gap:'3px' }}
         >
           <SidebarIcon>
             <item.icon />

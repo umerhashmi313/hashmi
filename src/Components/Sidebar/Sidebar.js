@@ -32,7 +32,7 @@ const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
 const SidebarToggle = styled(IconButton)(({ sidebarOpen }) => ({
   position: 'fixed',
   top: '20px',
-  left: sidebarOpen ? 'calc(17% - 20px)' : '16px', // Adjusted right position
+  left: sidebarOpen ? 'calc(17% - 20px)' : '18px', // Adjusted right position
   backgroundColor: '#ffffff',
   color: '#000',
   borderRadius: '20%',
@@ -41,7 +41,7 @@ const SidebarToggle = styled(IconButton)(({ sidebarOpen }) => ({
   boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
   zIndex: 1300,
   fontSize: '1.6rem',
-  transition: 'left 0.3s ease', // Add transition
+  transition: 'left 0.5s ease', // Add transition
   '&:hover': {
     backgroundColor: '#f0f0f0',
     transform: 'scale(1.1)',

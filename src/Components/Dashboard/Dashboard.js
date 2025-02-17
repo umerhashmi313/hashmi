@@ -5,6 +5,7 @@ import {
   Stack, 
   styled 
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons'
 
@@ -29,6 +30,7 @@ const StatCard = styled(Box)(({ theme }) => ({
 
 export default function ScholarshipCard() {
   const { Dashboard } = dashboardData;
+  const navigate = useNavigate();
   const stats = ['Questions', 'PassRate', 'Duration', 'Score'];
 
   const formatLabel = (key) => {
@@ -37,8 +39,7 @@ export default function ScholarshipCard() {
 
   return (
     <Box  sx={{ 
-      maxWidth: 686, 
-      mt: -5, 
+      maxWidth: 686,  
       mx: 'auto',
       padding: '16px',
       // height: 458, // Consider removing fixed height if content varies
@@ -143,10 +144,11 @@ export default function ScholarshipCard() {
         marginTop: '32px', // Add this to push to bottom
        
       }}>
-        <PrimaryButton variant="contained">
+        <PrimaryButton variant="contained"
+         onClick={() => navigate('/Questions')}>
           Start Quiz
         </PrimaryButton>
-        <SecondaryButton variant="contained">
+        <SecondaryButton variant="contained"  >
           View Previous Result
         </SecondaryButton>
       </Box>
