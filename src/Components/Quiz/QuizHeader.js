@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Box, Typography, Paper, Button, Grid, Checkbox } from "@mui/material";
 import neuronImage from '../../Assets/neuron.jpg';
-import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons'
+import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons';
 import TourIcon from '@mui/icons-material/Tour';
 import GradeSharpIcon from '@mui/icons-material/GradeSharp';
 import Switch from '@mui/material/Switch';
@@ -9,24 +9,16 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestionClick, onOptionSelect }) {
   const [solvedQuestions, setSolvedQuestions] = useState([]);
-
   const [timeLeft, setTimeLeft] = useState(900);
   const boxRefs = useRef([]);
   const containerRef = useRef();
   const [checkedStates, setCheckedStates] = useState({});
   const [isReviewMode, setIsReviewMode] = useState(false);
-  
 
-  //   console.log("Current Question:", questions[currentQuestionIndex]);
-  // console.log("Options:", questions[currentQuestionIndex]?.options);
-
-
-  const handleCheckboxChange = (optionIndex, optionValue ) => {
+  const handleCheckboxChange = (optionIndex, optionValue) => {
     const updatedCheckedStates = {};
-  
     // Mark only the selected option as checked
     updatedCheckedStates[`${currentQuestionIndex}-${optionIndex}`] = true;
-  
     setCheckedStates(updatedCheckedStates);
     console.log(optionValue);
     onOptionSelect(optionValue);
@@ -42,10 +34,8 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
       setSolvedQuestions([...solvedQuestions, currentQuestionIndex]);
     }
   
-    onNext(); // Move to the next question
+    onNext(); // Move to the next question or submit on the last question
   };
-  
-
 
   const handleReviewToggle = () => {
     setIsReviewMode((prev) => !prev);
@@ -60,22 +50,6 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
     }
   }, [timeLeft]);
 
-  const handleBoxClick = (index) => {
-    onQuestionClick(index);
-  };
-
-  const markAsSolved = () => {
-    if (!solvedQuestions.includes(currentQuestionIndex)) {
-      setSolvedQuestions([...solvedQuestions, currentQuestionIndex]);
-    }
-  };
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-  };
-
   const getBoxCenter = (index) => {
     if (boxRefs.current[index] && containerRef.current) {
       const box = boxRefs.current[index].getBoundingClientRect();
@@ -88,11 +62,15 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
     return { x: 0, y: 0 };
   };
 
-  const hasImageOptions = Array.isArray(questions[currentQuestionIndex]?.options) &&
-    questions[currentQuestionIndex]?.options.some(
-      option => typeof option === 'string' && option.match(/\.jpg|\.png|\.jpeg/)
-    );
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
 
+  const handleBoxClick = (index) => {
+    onQuestionClick(index);
+  };
 
   return (
     <Box sx={{
@@ -107,8 +85,8 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
       <Box sx={{
         display: "flex",
         flexDirection: "column",
-        maxWidth: "686px", // Sets the maximum width of the box
-        width: { xs: "100%", sm: "calc(100%)" }, // Adjust width for smaller screens
+        maxWidth: "686px",
+        width: { xs: "100%", sm: "calc(100%)" },
         backgroundColor: "white",
         zIndex: 1,
         padding: '16px',
@@ -118,46 +96,102 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
         top: { xs: '60px', sm: 'initial' }
       }}>
         <Box sx={{ display: "flex", mt: '5px' }}>
-          <Typography sx={{ fontSize: '12px', color: 'black', fontWeight: '900', lineHeight: '12px' }}>MODULE 1 > CHAPTER > QUIZ</Typography>
+          <Typography sx={{ fontSize: '12px', color: 'black', fontWeight: '900', lineHeight: '12px' }}>
+            MODULE 1 > CHAPTER > QUIZ
+          </Typography>
         </Box>
 
-        <Box ref={containerRef} sx={{ display: "flex", gap: '8px', flexWrap: "wrap", justifyContent: "start", position: "relative", marginTop: '6px' }}>
-          <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+        <Box
+          ref={containerRef}
+          sx={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: "nowrap",
+            overflowX: "auto",
+            justifyContent: "start",
+            position: "relative",
+            marginTop: "6px",
+            "::-webkit-scrollbar": { display: "none" },
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
+        >
+          <svg
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none",
+            }}
+          >
             {questions.slice(0, -1).map((_, index) => {
               const start = getBoxCenter(index);
               const end = getBoxCenter(index + 1);
               return (
-                <line key={index} x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke="#31CEB8" strokeWidth="1px" />
+                <line
+                  key={index}
+                  x1={start.x}
+                  y1={start.y}
+                  x2={end.x}
+                  y2={end.y}
+                  stroke="#31CEB8"
+                  strokeWidth="1px"
+                />
               );
             })}
           </svg>
 
-          {questions.map((_, index) => {
-  
-  return (
-    <Button 
-      key={index} 
-      onClick={() => handleBoxClick(index)} 
-      ref={(el) => (boxRefs.current[index] = el)}
-      sx={{
-        width: '24px', minWidth: 0, height: '24px', boxShadow: 'none', fontWeight: '800',
-        border: currentQuestionIndex === index ? 'none' : '1px solid lightgrey', padding: '0',
-        fontSize: solvedQuestions.includes(index) ? "15px" : currentQuestionIndex === index ? "17px" : "17px",
-        backgroundColor: solvedQuestions.includes(index) ? "#4CAF50" : 
-                        currentQuestionIndex === index ? "black" : 'white',
-                    
-        color: solvedQuestions.includes(index) || currentQuestionIndex === index ? "#fff" : "#B5B6B8",
-        "&:hover": { backgroundColor: solvedQuestions.includes(index) ? "#45a049" : currentQuestionIndex === index ? "#black" : "#ccc" },
-        transition: "background-color 0.3s", zIndex: 1,
-      }}>
-      {index + 1}
-    </Button>
-  );
-})}
-
+          {questions.map((_, index) => (
+            <Button
+              key={index}
+              onClick={() => handleBoxClick(index)}
+              ref={(el) => (boxRefs.current[index] = el)}
+              sx={{
+                width: "24px",
+                minWidth: 0,
+                height: "24px",
+                boxShadow: "none",
+                fontWeight: "800",
+                border: currentQuestionIndex === index
+                  ? "none"
+                  : "1px solid lightgrey",
+                padding: "0",
+                fontSize: solvedQuestions.includes(index)
+                  ? "15px"
+                  : currentQuestionIndex === index
+                  ? "17px"
+                  : "17px",
+                backgroundColor: solvedQuestions.includes(index)
+                  ? "#4CAF50"
+                  : currentQuestionIndex === index
+                  ? "black"
+                  : "white",
+                color:
+                  solvedQuestions.includes(index) || currentQuestionIndex === index
+                    ? "#fff"
+                    : "#B5B6B8",
+                "&:hover": {
+                  backgroundColor: solvedQuestions.includes(index)
+                    ? "#45a049"
+                    : currentQuestionIndex === index
+                    ? "black"
+                    : "#ccc",
+                },
+                transition: "background-color 0.3s",
+                zIndex: 1,
+              }}
+            >
+              {index + 1}
+            </Button>
+          ))}
         </Box>
+
         <Box sx={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography sx={{ flex: 1, fontSize: '16px', fontWeight: '500' }}>Solved: {solvedQuestions.length}/{questions.length}</Typography>
+          <Typography sx={{ flex: 1, fontSize: '16px', fontWeight: '500' }}>
+            Solved: {solvedQuestions.length}/{questions.length}
+          </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
             <AccessTimeIcon sx={{ height: '24px' }} />
             <Typography sx={{ fontSize: '16px', fontWeight: '500' }}>{formatTime(timeLeft)}</Typography>
@@ -174,9 +208,9 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
-          width: { xs: '94%', sm: '100%' }, // Use 100% width to fill the parent container
-          maxWidth: '686px', // Set a maximum width for larger screens
-          margin: '0 auto', // Center the box horizontally
+          width: { xs: '94%', sm: '100%' },
+          maxWidth: '686px',
+          margin: '0 auto',
         }}
       >
         <Box sx={{ gap: '16px' }}>
@@ -196,9 +230,10 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <GradeSharpIcon sx={{ height: '21px', color: 'yellow' }} />
               <Typography sx={{ fontWeight: '800', fontSize: '18px' }}>·</Typography>
-              <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>Review<Switch checked={isReviewMode} onChange={handleReviewToggle} sx={{
-
-              }} /></Typography>
+              <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
+                Review
+                <Switch checked={isReviewMode} onChange={handleReviewToggle} />
+              </Typography>
             </Box>
           </Box>
 
@@ -257,23 +292,13 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
             </Box>
           </Box>
 
-
           <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-            <Grid container spacing={1}
-            >
+            <Grid container spacing={1}>
               {questions[currentQuestionIndex]?.options.map((option, index) => {
                 const optionText = option.text || option; // Extract `text` if `option` is an object
-
-                //  console.log(optionText)
-
-
-
                 const isImageOption = typeof option === 'string' && option.match(/\.jpg|\.png|\.jpeg/);
                 return (
-                  <Grid item xs={isImageOption ? 6 : 12} key={index} >
-
-
-
+                  <Grid item xs={isImageOption ? 6 : 12} key={index}>
                     <Paper
                       sx={{
                         width: isImageOption ? '300px' : '100%',
@@ -292,10 +317,9 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
                       }}
                       onClick={(e) => {
                         if (e.target.type !== 'checkbox') {
-                          handleCheckboxChange(index, option );
+                          handleCheckboxChange(index, option);
                         }
                       }}
-
                     >
                       <Checkbox
                         checked={!!checkedStates[`${currentQuestionIndex}-${index}`]}
@@ -328,9 +352,6 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
                         </Typography>
                       )}
                     </Paper>
-
-
-
                   </Grid>
                 );
               })}
@@ -338,9 +359,14 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
           </Box>
         </Box>
 
+        {/* Navigation Buttons */}
         <Box sx={{ display: 'flex', gap: '8px', justifyContent: 'center', width: '100%', mt: { sm: 0, xs: '20%' } }}>
-          <SecondaryButton variant="contained" onClick={onBack}>Back</SecondaryButton>
-          <PrimaryButton variant="contained" onClick={handleNext}>Next</PrimaryButton>
+          <SecondaryButton variant="contained" onClick={onBack} disabled={currentQuestionIndex === 0}>
+            Back
+          </SecondaryButton>
+          <PrimaryButton variant="contained" onClick={handleNext}>
+            {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"}
+          </PrimaryButton>
         </Box>
       </Box>
     </Box>

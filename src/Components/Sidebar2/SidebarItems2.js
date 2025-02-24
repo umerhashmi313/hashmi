@@ -1,129 +1,174 @@
-import React, { useState } from 'react';
-import { Box, Typography, Stepper, Step, StepLabel } from '@mui/material';
-import { ExpandLess, ExpandMore } from '@mui/icons-material';
-import PlayCircleIcon from '@mui/icons-material/PlayCircle';
-import QuizIcon from '@mui/icons-material/Quiz';
-import BookmarksIcon from '@mui/icons-material/Bookmarks';
-import { navigationData } from './Demo2';
+import React, { useState, useEffect } from "react";
+import { Box, Typography, Stepper, Step, StepLabel, CircularProgress } from "@mui/material";
+import { ExpandLess, ExpandMore, PlayCircle, QuizOutlined, NotesOutlined } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
-const VerticalConnector = () => <div style={{ borderLeft: '2px solid #ccc', height: '22px', marginLeft: '4px' , backgroundcolor:'#78BBFF', opacity:'40%' }} />;
-const StepIconContainer = ({ children }) => <div style={{ display: 'flex', alignItems: 'center' }}>{children}</div>;
-const StepIcon = ({ active }) => <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: active ? '#78BBFF' : '#78BBFF', opacity: active ? 1 : 0.2,  }} />;
-const FadedDivider = () => <div style={{ borderBottom: '1px solid #ccc', margin: '10px 10px' }} />;
+const VerticalConnector = () => <div style={{ borderLeft: "2px solid #ccc", height: "22px", marginLeft: "20px",my:'-10px', opacity: "40%" }} />;
+const StepIconContainer = ({ children }) => <div style={{ display: "flex", alignItems: "center" }}>{children}</div>;
+const StepIcon = ({ active }) => <div style={{   width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#78BBFF", opacity: active ? 1 : 0.4 }} />;
+const FadedDivider = () => <div style={{ borderBottom: "1px solid #ccc", margin: "10px 10px" }} />;
 
 const NavigationComponent = () => {
-  const [expandedSections, setExpandedSections] = useState({});
-  const [activeStep, setActiveStep] = useState(null); // Track the globally active step
+  const [expanded, setExpanded] = useState(false);
+  const [activeStep, setActiveStep] = useState(null);
+  const [courseData, setCourseData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const toggleSection = (sectionName) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [sectionName]: !prev[sectionName],
-    }));
-  };
+  useEffect(() => {
+    const fetchCourseData = async () => {
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        console.error("No auth token found.");
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch("https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const data = await response.json();
+        console.log(data)
+        setCourseData(data[0]);
+      } catch (error) {
+        console.error("Error fetching course data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourseData();
+  }, []);
 
-  const handleStepClick = (sectionName, topicName, itemName) => {
-    // Set the globally active step
-    setActiveStep(`${sectionName}-${topicName}-${itemName}`);
+  if (loading) return <CircularProgress />;
+  if (!courseData) return <Typography>Error loading course data.</Typography>;
+
+  const handleStepClick = (step) => {
+    setActiveStep(step);
   };
 
   return (
-    <Box
-      sx={{
-        maxHeight: 'calc(100vh - 100px)',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        pr: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        '&::-webkit-scrollbar': { width: '8px' },
-        '&::-webkit-scrollbar-thumb': { backgroundColor: '#888', borderRadius: '4px' },
-        '&::-webkit-scrollbar-track': { backgroundColor: '#03162A' },
-        paddingBottom: '100px',
-      }}
-    >
-      {/* Render Chapter 1 Video heading */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mt: 2, cursor: 'pointer', px: '8px', gap:'8px' }}>
-        <PlayCircleIcon sx={{ height:'18px', width:'18px', fontSize:'20px', color: '#FFFFFF', }} />
-        <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '16px', cursor: 'pointer' }}>
-          Chapter 1 Video
+    <Box sx={{
+      maxHeight: "calc(100vh - 100px)",
+      overflowY: "auto",
+      pr: 2,
+      display: "flex",
+      flexDirection: "column",
+      '&::-webkit-scrollbar': { width: '8px' },
+      '&::-webkit-scrollbar-thumb': { backgroundColor: '#888', borderRadius: '4px' },
+      '&::-webkit-scrollbar-track': { backgroundColor: '#03162A' },
+      paddingBottom: "100px",
+    }}>
+      {/* Course Name Clickable */}
+      <Box sx={{ display: "flex", alignItems: "center", mt: 2, cursor: "pointer", px: "12px", gap: "12px" }} onClick={() => setExpanded(!expanded)}>
+        {expanded ? <ExpandLess /> : <ExpandMore />}
+        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "18px", cursor: "pointer" }}>
+          {courseData.course?.name || "No Course Name"}
         </Typography>
       </Box>
       <FadedDivider />
 
-      {/* Render collapsible Chapter 1 section */}
-      {Object.entries(navigationData.Navigation).map(([sectionName, sectionData]) => (
-        <React.Fragment key={sectionName}>
-          <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px', px: '4px', py: '2px' }} onClick={() => toggleSection(sectionName)}>
-            {expandedSections[sectionName] ? <ExpandLess /> : <ExpandMore />}
-            <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '16px', cursor: 'pointer' }}>
-              {sectionName}
-            </Typography>
-          </Box>
-          {/* Add a divider after the Chapter 1 heading */}
-          <FadedDivider />
-
-          {expandedSections[sectionName] && (
-            <Box sx={{ pl: '10px', pr: '10px', mt: 1, mb: 2 }}>
-              <Stepper orientation="vertical" connector={<VerticalConnector />}>
-                {Object.entries(sectionData.topics).flatMap(([topicName, topicData]) =>
-                  Object.entries(topicData.items).map(([itemName, itemData]) => {
-                    const stepKey = `${sectionName}-${topicName}-${itemName}`; // Unique key for each item
-                    const isActive = activeStep === stepKey; // Check if this item is active
-
-                    return (
-                      <Step key={itemName} onClick={() => handleStepClick(sectionName, topicName, itemName)}>
-                        <StepLabel
-                          StepIconComponent={({ active }) => (
-                            <StepIconContainer>
-                              <StepIcon active={isActive} />
-                            </StepIconContainer>
-                          )}
-                          sx={{
-                            cursor: 'pointer',
-                            padding: 0,
-                            '& .MuiStepLabel-label': {
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              fontWeight: isActive ? '600' : '400',
-                              fontSize: '13px',
-                              color: isActive ? 'white' : '#666',
-                              opacity: isActive ? 1 : 0.2,
-                              marginLeft: '12px',
-                            },
-                            '& .MuiStepLabel-iconContainer': {
-                              padding: 0,
-                            },
-                          }}
-                        >
-                          <itemData.icon sx={{ fontSize: '18px', fontWeight: '600', color: isActive ? '#FFFFFF' : '#FFFFFF' }} />
-                          {itemName}
-                        </StepLabel>
-                      </Step>
-                    );
-                  })
+      {expanded && (
+        <Stepper  orientation="vertical"  connector={<VerticalConnector />}>
+          {/* Subjects */}
+          {courseData.subjects?.map((subject, index) => (
+            <Step  sx={{
+              mb:'-10px'
+            }} key={index} onClick={() => handleStepClick(subject.name)}>
+              <StepLabel
+                StepIconComponent={({ active }) => (
+                  <StepIconContainer>
+                    <StepIcon active={activeStep === subject.name} />
+                  </StepIconContainer>
                 )}
-              </Stepper>
-            </Box>
-          )}
-        </React.Fragment>
-      ))}
+                sx={{
+                  cursor: "pointer",
+                  paddingLeft: "16px",
+                  '& .MuiStepLabel-label': {
+                    fontWeight: activeStep === subject.name ? "600" : "400",
+                    fontSize: "15px",
+                    color: activeStep === subject.name ? "white" : "#ccc",
+                  },
+                }}
+              >
+                {subject.name}
+              </StepLabel>
+            </Step>
+          ))}
 
-      {/* Render Chapter 1 Quiz and Chapter 1 Notes headings */}
-      {Object.entries(navigationData.AdditionalSections).map(([sectionName, sectionData]) => (
-        <React.Fragment key={sectionName}>
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', px: '8px', py: '4px' }}>
-              <sectionData.icon sx={{ fontSize: '18px', color: '#FFFFFF', mr: 1 }} />
-              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '16px', cursor: 'pointer' }}>
-                {sectionName}
-              </Typography>
-            </Box>
-            <FadedDivider />
-          </Box>
-        </React.Fragment>
-      ))}
+          {/* Direct Content */}
+          {["videos", "quizzes", "reading_materials"].map((contentType, index) => (
+  courseData.direct_content?.[contentType]?.length > 0 && (
+    <Step
+      sx={{
+        my: '-10px',
+        cursor: "pointer",
+      }}
+      key={index}
+      onClick={() => {
+        if (contentType === "quizzes") {
+          setActiveStep("quizzes"); // Ensure "quizzes" is marked as active
+          navigate("/dashboard");
+        } else {
+          handleStepClick(contentType);
+        }
+      }}
+    >
+      <StepLabel
+        StepIconComponent={({ active }) => (
+          <StepIconContainer>
+            <StepIcon active={activeStep === contentType} />
+          </StepIconContainer>
+        )}
+        sx={{
+          cursor: "pointer",
+          paddingLeft: "16px",
+
+          '& .MuiStepLabel-label': {
+            fontWeight: activeStep === contentType ? "600" : "400",
+            fontSize: "15px",
+            color: activeStep === contentType ? "white" : "black", // Fix color condition
+          },
+        }}
+      >
+        {courseData.direct_content[contentType][0]?.title || "No Data"}
+      </StepLabel>
+    </Step>
+  )
+))}
+
+
+          {/* Sections */}
+          {courseData.sections?.map((section, index) => (
+            <Step sx={{
+               my:'-10px'
+            }} key={index} onClick={() => handleStepClick(section.title)}>
+              <StepLabel
+                StepIconComponent={({ active }) => (
+                  <StepIconContainer>
+                    <StepIcon active={activeStep === section.title} />
+                  </StepIconContainer>
+                )}
+                sx={{
+                 
+                  paddingLeft: "16px",
+                  '& .MuiStepLabel-label': {
+                    fontWeight: activeStep === section.title ? "600" : "400",
+                    fontSize: "15px",
+                    color: activeStep === section.title ? "white" : "black",
+                  },
+                }}
+              >
+                {section.title}
+              </StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      )}
     </Box>
   );
 };

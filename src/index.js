@@ -4,6 +4,7 @@ import './index.css';
 import Desk from './Components/Authorization/Desk';
 import { BrowserRouter } from "react-router-dom";
 import App from './App';
+import AppRoutes from './AppRoutes';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

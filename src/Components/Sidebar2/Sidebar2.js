@@ -7,17 +7,23 @@ import { RiMenuUnfold3Fill } from "react-icons/ri";
 import { RiMenuFold3Fill } from "react-icons/ri";
 import SidebarItems from './SidebarItems2';
 import { navigationData } from './Demo2'; // Correct import
+import CottageIcon from '@mui/icons-material/Cottage';
+import { useNavigate } from 'react-router-dom';
+import { useState , useEffect  } from 'react';
+import { Card, CardContent, Avatar,CircularProgress } from "@mui/material";
+
 
 
 const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
   backgroundColor: '#03162A',
   color: '#ffffff',
-  minHeight: '100vh',
+  height: '100vh',
   width: sidebarOpen ? '235px' : '60px',
   transition: 'width 0.3s ease',
   display: 'flex',
   flexDirection: 'column',
   overflowX: 'hidden', // Add scroll for sidebar if content overflows
+  
 
 }));
 
@@ -109,8 +115,62 @@ const SidebarItemFooter = styled(SidebarItem)(({ theme }) => ({
     transform: 'translateY(-5px)',
   },
 }));
+ 
+
+
+
+
 
 export default function Sidebar2({ sidebarOpen, toggleSidebar ,  onLogout }) {
+   const [courseData, setCourseData] = useState(null);
+   const [loading, setLoading] = useState(true);
+   useEffect(() => {
+       const fetchCourseData = async () => {
+         const authToken = localStorage.getItem("authToken"); // Get token from local storage
+   
+         if (!authToken) {
+           console.error("No auth token found.");
+           setLoading(false);
+           return;
+         }
+   
+         try {
+           const response = await fetch("https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/", {
+             method: "GET",
+             headers: {
+               "Content-Type": "application/json",
+               Authorization: `Bearer ${authToken}`, // Include token in headers
+             },
+           });
+   
+           if (!response.ok) {
+             throw new Error(`HTTP error! Status: ${response.status}`);
+           }
+   
+           const data = await response.json();
+           console.log(data)
+           setCourseData(data[0]); // Assuming first course in the list
+           console.log(data)
+         } catch (error) {
+           console.error("Error fetching course data:", error);
+         } finally {
+           setLoading(false);
+         }
+       };
+   
+       fetchCourseData();
+     }, []);
+     
+  const navigate = useNavigate();
+
+  
+    if (loading) {
+      return <CircularProgress />;
+    }
+  
+    if (!courseData) {
+      return <Typography>Error loading course data.</Typography>;
+    }
   return (
     <Box display="flex" >
       {/* Sidebar */}
@@ -150,10 +210,14 @@ export default function Sidebar2({ sidebarOpen, toggleSidebar ,  onLogout }) {
    <FooterSection>
   <Black2Divider />
   {[ 
+    { icon: CottageIcon, text: 'Home' ,onClick: () => navigate('/Courses'),  },
     { icon: SettingsIcon, text: 'Settings' },
-    { icon: ExitToAppIcon, text: 'Logout', onClick: onLogout } // Add onClick handler for logout
+    { icon: ExitToAppIcon, text: 'Logout', onClick: onLogout },
+    
+     // Add onClick handler for logout
   ].map((item, index) => (
-    <SidebarItemFooter key={index} onClick={item.onClick}>
+    <SidebarItemFooter key={index}
+     onClick={item.onClick}>
       <SidebarIcon>
         <item.icon />
       </SidebarIcon>
@@ -189,10 +253,11 @@ export default function Sidebar2({ sidebarOpen, toggleSidebar ,  onLogout }) {
     <Box sx={{ marginTop: 'auto' ,
      }}>
       {[
+        {icon:CottageIcon , text:'Home'  , onClick: () => navigate('/Courses'), },// Navigate to /Courses on click },
         { icon: SettingsIcon, text: 'Settings' },
-        { icon: ExitToAppIcon, text: 'Logout' }
+        { icon: ExitToAppIcon, text: 'Logout' ,  onClick: onLogout  }
       ].map((item, index) => (
-        <SidebarItem 
+        <SidebarItem  onClick={item.onClick}
           key={`footer-${index}`}
           sx={{ ml: '-3px', mb:'10px', gap:'3px' }}
         >

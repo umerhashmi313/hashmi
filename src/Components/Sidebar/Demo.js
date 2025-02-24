@@ -8,7 +8,7 @@ export const navigationData = {
     Navigation: {
         Students: {
             Dashboard: {
-                url: '',
+                url: '/dashboard',
                 icon: DashboardIcon
             },
             Page: {
@@ -16,7 +16,7 @@ export const navigationData = {
                 icon: PagesIcon
             },
             Courses: {
-                url: 'www.Temporary',
+                url: '/courses',
                 icon: SchoolIcon
             },
             Announcements: {

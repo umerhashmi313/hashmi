@@ -14,14 +14,10 @@ const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
   backgroundColor: '#03162A',
   color: '#ffffff',
   height: '100vh',
-  width: sidebarOpen ? '17%' : '5%',
+  width: sidebarOpen ? '235px' : '60px',
   transition: 'width 0.3s ease',
   display: 'flex',
   flexDirection: 'column',
-  position: 'fixed', // Changed from relative
-  top: 0,
-  left: 0,
-  zIndex: 1200, // Ensure sidebar stays above other content
   overflowY: 'auto', // Add scroll for sidebar if content overflows
 
 }));
@@ -32,7 +28,7 @@ const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
 const SidebarToggle = styled(IconButton)(({ sidebarOpen }) => ({
   position: 'fixed',
   top: '20px',
-  left: sidebarOpen ? 'calc(17% - 20px)' : '18px', // Adjusted right position
+  left: sidebarOpen ? 'calc(234px - 20px)' : '13px', // Adjusted right position
   backgroundColor: '#ffffff',
   color: '#000',
   borderRadius: '20%',
@@ -119,7 +115,7 @@ const SidebarItemFooter = styled(SidebarItem)(({ theme }) => ({
   },
 }));
 
-export default function Sidebar({ sidebarOpen, toggleSidebar }) {
+export default function Sidebar({ sidebarOpen, toggleSidebar,  onLogout  }) {
   return (
     <Box display="flex">
       {/* Sidebar */}
@@ -145,9 +141,11 @@ export default function Sidebar({ sidebarOpen, toggleSidebar }) {
   <Black2Divider />
   {[
     { icon: SettingsIcon, text: 'Settings' },
-    { icon: ExitToAppIcon, text: 'Logout' }
+    { icon: ExitToAppIcon, text: 'Logout' ,onClick: onLogout }
   ].map((item, index) => (
-    <SidebarItemFooter key={index}>
+    <SidebarItemFooter
+    onClick={item.onClick}
+    key={index}>
       <SidebarIcon>
         <item.icon />
       </SidebarIcon>
@@ -180,9 +178,9 @@ export default function Sidebar({ sidebarOpen, toggleSidebar }) {
     <Box sx={{ marginTop: 'auto' }}>
       {[
         { icon: SettingsIcon, text: 'Settings' },
-        { icon: ExitToAppIcon, text: 'Logout' }
+        { icon: ExitToAppIcon, text: 'Logout', onClick: onLogout  }
       ].map((item, index) => (
-        <SidebarItem 
+        <SidebarItem   onClick={item.onClick}
           key={`footer-${index}`}
           sx={{ ml: '-3px' , mb:'10px' , gap:'3px' }}
         >

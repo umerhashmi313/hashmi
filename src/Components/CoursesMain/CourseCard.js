@@ -1,52 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardMedia, Typography, Chip, Button, Box } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
-export default function CourseCard() {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export default function CourseCard({course}) {
 
-  const [token, setToken] = useState(localStorage.getItem("authToken"));
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
-    setToken(storedToken);
-    console.log("Token in CourseCard:", storedToken);
   
-    if (!storedToken) {
-      console.log("No token found, aborting fetch.");
-      return;
-    }
-  
-    fetch("https://backend-lms-xpp7.onrender.com/api/courses/", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${storedToken}`,
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Failed to fetch courses: ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("Fetched Courses:", data);
-        setCourses(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [token]); // ✅ Now updates when token changes
-  
+  const handleClick = () => {
+    // Navigate to /singlecourse/<course.id> and pass the course id in location state
+    navigate(`/singlecourse`, { state: { courseId: course.id } });
+  };
   
   
   return (
-    <>
-      {courses.map((course) => (
         <Card
+        onClick={handleClick}
           key={course.id}
           sx={{
             display: "flex",
@@ -125,7 +94,7 @@ export default function CourseCard() {
             </Box>
           </CardContent>
         </Card>
-      ))}
-    </>
+    
+    
   );
 }

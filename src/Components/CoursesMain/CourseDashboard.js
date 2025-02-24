@@ -1,8 +1,48 @@
 import React from "react";
 import CourseCard from "./CourseCard"; // Importing the CourseCard component
 import { Box, Typography , Chip } from "@mui/material";
+import { useState , useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function CourseList() {
+
+  const Navigate = useNavigate()
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("authToken");
+    if (!storedToken) {
+      console.log("No token found, aborting fetch.");
+      setLoading(false);
+      return;
+    }
+
+    fetch("https://backend-lms-xpp7.onrender.com/api/courses/", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${storedToken}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch courses: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setCourses(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <Typography>Loading courses...</Typography>;
+  if (error) return <Typography>Error: {error}</Typography>;
   return (
     <Box
       sx={{
@@ -50,11 +90,9 @@ export default function CourseList() {
           gap: "16px",
         }}
       >
-        {/* Rendering multiple CourseCard components */}
-        <CourseCard />
-        <CourseCard />
-        <CourseCard />
-        <CourseCard />
+        {courses.map((course) => (
+          <CourseCard key={course.id} course={course} />
+        ))}
       </Box>
     </Box>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import {  Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import Sidebar from './Components/Sidebar/Sidebar';
 import Header from './Components/Header/Header';
 import Sidebar2 from './Components/Sidebar2/Sidebar2';
@@ -11,7 +11,7 @@ import Videopage from './Components/Videopage/Videopage';
 import Notespage from './Components/Notes/Notes'
 import Courses from './Components/Courses/Courses';
 import zIndex from '@mui/material/styles/zIndex';
-import Login from './Components/Login/Login';
+import Login from './Components/Authorization/Login';
 import ScholarshipCard from './Components/Dashboard/Dashboard';
 import CoursesMain from './Components/CoursesMain/CourseCard';
 import CourseList from './Components/CoursesMain/CourseDashboard';
@@ -19,6 +19,8 @@ import SingleCourse from './Components/SingleCourse/SingleCourse';
 import CourseCard from './Components/CoursesMain/CourseCard';
 import SingleCourseCard from './Components/SingleCourse/SingleCourseDesk';
 import ProtectedRoute from './Components/ProtectedRoutes/ProtectedRoutes';
+import SignPage from './Components/Authorization/SignIn';
+import './App.css'
 
 
 export default function App({onLogout}) {
@@ -32,7 +34,14 @@ export default function App({onLogout}) {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const location = useLocation();
+  const showSidebar2 = ['/questions', '/singlecourse', '/dashboard'].includes(location.pathname.toLowerCase());
+
+
   return (
+    // <>
+    // <SignPage/>
+    // </>
     
       <Box sx={{ display: 'flex' }}>
 
@@ -46,7 +55,12 @@ export default function App({onLogout}) {
           flexShrink: 0,
           transition: 'width 0.3s ease',
         }}>
+        {showSidebar2 ? (
           <Sidebar2 onLogout={onLogout} sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+        ) : (
+          <Sidebar onLogout={onLogout} sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+        )}
+      
         </Box>
 
         {/* Main Content Area */}
