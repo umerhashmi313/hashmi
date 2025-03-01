@@ -3,13 +3,13 @@ import {
   Box,
   Typography,
   Paper,
-  Button,
   Grid,
   Checkbox,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Button,
   Switch,
 } from "@mui/material";
 import { PrimaryButton, SecondaryButton } from "../Buttons/Buttons";
@@ -18,83 +18,90 @@ import GradeSharpIcon from "@mui/icons-material/GradeSharp";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "react-query";
 
 function QuizHeader({ onOptionSelect }) {
-  const [questions, setQuestions] = useState([]);
-  const [checkedStates, setCheckedStates] = useState({});
+  // Local state for review mode, timer, current question index and filters.
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [timeLeft, setTimeLeft] = useState(900);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [attemptTime, setAttemptTime] = useState(null);
   const [filterType, setFilterType] = useState("all"); // "all", "correct", "incorrect"
   const [difficultyFilter, setDifficultyFilter] = useState("all");
+  // This state holds the index of the option selected originally (keyed by question originalIndex)
+  const [checkedStates, setCheckedStates] = useState({});
 
+  // Refs for SVG connector lines
   const boxRefs = useRef([]);
   const containerRef = useRef();
   const navigate = useNavigate();
 
-  // Fetch and format quiz data
+  // Countdown timer effect
   useEffect(() => {
-    const fetchQuizData = async () => {
-      try {
-        const authToken = localStorage.getItem("authToken");
-        const userId = localStorage.getItem("userId");
-        const Base_Url = process.env.REACT_APP_BASE_URL;
+    if (timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [timeLeft]);
 
-        const response = await fetch(
-          `${Base_Url}/quiz-attempts/latest/?student=${userId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+  // Query function to fetch quiz attempt data
+  const fetchQuizAttemptData = async () => {
+    const authToken = localStorage.getItem("authToken");
+    const userId = localStorage.getItem("userId");
+    const Base_Url = process.env.REACT_APP_BASE_URL;
+    const response = await fetch(`${Base_Url}/quiz-attempts/latest/?student=${userId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error("Authorization failed or network error");
+    }
+    return response.json();
+  };
 
-        if (!response.ok) {
-          throw new Error("Authorization failed or network error");
-        }
+  // Use React Query to fetch the quiz attempt data.
+  const { data: quizData, isLoading, error } = useQuery(
+    ["quizAttempt", localStorage.getItem("userId")],
+    fetchQuizAttemptData
+  );
 
-        const data = await response.json();
-        setAttemptTime(data.attempt_time);
+  // Format the raw quiz data into questions and initial checked states.
+  const { questions, initialCheckedStates, attemptTime } = useMemo(() => {
+    if (!quizData) return { questions: [], initialCheckedStates: {}, attemptTime: null };
+    const formattedQuestions = quizData.questions.map((q, index) => ({
+      originalIndex: index,
+      text: q.question_text,
+      options: q.options.map((option) => ({
+        id: option.option_id,
+        text: option.option_text,
+        isCorrect: option.option_is_correct,
+      })),
+      selectedOption: q.selected_option ? q.selected_option.id : null,
+      isCorrect: q.is_correct,
+      difficulty: q.difficulty?.text ? q.difficulty.text.toLowerCase() : "unknown",
+      q_tags: q.q_tags,
+      image: q.image || null, // if available
+    }));
+    const initialChecked = {};
+    formattedQuestions.forEach((q) => {
+      const selectedIndex = q.options.findIndex((opt) => opt.id === q.selectedOption);
+      initialChecked[q.originalIndex] = selectedIndex;
+    });
+    return { questions: formattedQuestions, initialCheckedStates: initialChecked, attemptTime: quizData.attempt_time };
+  }, [quizData]);
 
-        // Format questions by including an original index and full option objects.
-        const formattedQuestions = data.questions.map((q, index) => ({
-          originalIndex: index,
-          text: q.question_text,
-          options: q.options.map((option) => ({
-            id: option.option_id,
-            text: option.option_text,
-            isCorrect: option.option_is_correct,
-          })),
-          selectedOption: q.selected_option ? q.selected_option.id : null,
-          isCorrect: q.is_correct,
-          // Use the difficulty text (if provided), converted to lowercase for consistency.
-          difficulty: q.difficulty?.text ? q.difficulty.text.toLowerCase() : "unknown",
-          q_tags: q.q_tags,
-        }));
+  // When the formatted initial checked states are computed, update local state.
+  useEffect(() => {
+    if (Object.keys(initialCheckedStates).length > 0) {
+      setCheckedStates(initialCheckedStates);
+    }
+  }, [initialCheckedStates]);
 
-        // Build initial checked states (keyed by original index).
-        const initialCheckedStates = {};
-        formattedQuestions.forEach((q, index) => {
-          const selectedIndex = q.options.findIndex(
-            (opt) => opt.id === q.selectedOption
-          );
-          initialCheckedStates[q.originalIndex] = selectedIndex;
-        });
-
-        setQuestions(formattedQuestions);
-        setCheckedStates(initialCheckedStates);
-      } catch (error) {
-        console.error("Error fetching quiz data:", error);
-      }
-    };
-
-    fetchQuizData();
-  }, []);
-
-  // useMemo to derive filtered questions based on filterType and difficultyFilter.
+  // Derive filtered questions based on filter type and difficulty.
   const filteredQuestions = useMemo(() => {
     let filtered = [...questions];
     if (filterType === "correct") {
@@ -108,22 +115,12 @@ function QuizHeader({ onOptionSelect }) {
     return filtered;
   }, [questions, filterType, difficultyFilter]);
 
-  // Reset current question index when filters change
+  // Reset current question index when filters change.
   useEffect(() => {
     setCurrentQuestionIndex(0);
   }, [filterType, difficultyFilter, questions]);
 
-  // Timer countdown effect
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [timeLeft]);
-
-  // Format attempt time (assuming an ISO string) as MM:SS
+  // Format attempt time (MM:SS) for display.
   const formatTime = (isoString) => {
     const date = new Date(isoString);
     const minutes = String(date.getUTCMinutes()).padStart(2, "0");
@@ -131,7 +128,7 @@ function QuizHeader({ onOptionSelect }) {
     return `${minutes}:${seconds}`;
   };
 
-  // Filter change handlers
+  // Filter change handlers.
   const handleFilterChange = (event) => {
     setFilterType(event.target.value);
   };
@@ -140,13 +137,7 @@ function QuizHeader({ onOptionSelect }) {
     setDifficultyFilter(event.target.value);
   };
 
-  // Instead of allowing option selection, this function now simply does nothing
-  // to keep the page read-only.
-  const handleCheckboxChange = (optionIndex, option) => {
-    // Disabled - no option can be selected/unselected.
-  };
-
-  // Navigation functions based on filteredQuestions
+  // Navigation functions for the quiz.
   const handleNext = () => {
     if (currentQuestionIndex < filteredQuestions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
@@ -167,7 +158,7 @@ function QuizHeader({ onOptionSelect }) {
     setCurrentQuestionIndex(index);
   };
 
-  // Get the center position of a navigation button for drawing connecting lines.
+  // Helper to compute center of a button (for SVG connector lines)
   const getBoxCenter = (index) => {
     if (boxRefs.current[index] && containerRef.current) {
       const box = boxRefs.current[index].getBoundingClientRect();
@@ -187,6 +178,10 @@ function QuizHeader({ onOptionSelect }) {
       : isReviewMode
       ? "yellow"
       : "white";
+
+  if (isLoading) return <p>Loading quiz attempt data...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+  if (!questions.length) return <p>No quiz data available.</p>;
 
   return (
     <Box
@@ -283,8 +278,7 @@ function QuizHeader({ onOptionSelect }) {
                 height: "24px",
                 boxShadow: "none",
                 fontWeight: "800",
-                border:
-                  currentQuestionIndex === index ? "none" : "1px solid lightgrey",
+                border: currentQuestionIndex === index ? "none" : "1px solid lightgrey",
                 padding: "0",
                 fontSize:
                   filteredQuestions[index]?.isCorrect || currentQuestionIndex === index
@@ -536,25 +530,23 @@ function QuizHeader({ onOptionSelect }) {
         <Grid container spacing={1}>
           {filteredQuestions[currentQuestionIndex]?.options.map((option, index) => {
             const originalIndex = filteredQuestions[currentQuestionIndex].originalIndex;
+            // Restore the checkbox functionality using checkedStates.
             const isSelected = checkedStates[originalIndex] === index;
             // Determine correct option for current question
             const correctOption = filteredQuestions[currentQuestionIndex]?.options.find(
               (opt) => opt.isCorrect
             );
-
-            // Set default background and checkbox colors
+            // Set default background and checkbox colors.
             let backgroundColor = "#EAFAF8";
             let checkboxColor = "#000";
-
             if (isSelected) {
               backgroundColor = option.isCorrect ? "#41723A" : "#FF4447";
               checkboxColor = "#fff";
             }
-            // If the answer is wrong, highlight the correct option in green
+            // If the answer is wrong, highlight the correct option in green.
             if (!filteredQuestions[currentQuestionIndex].isCorrect && option.isCorrect) {
               backgroundColor = "#4CAF50";
             }
-
             return (
               <Grid item xs={12} key={index}>
                 <Paper
@@ -566,7 +558,6 @@ function QuizHeader({ onOptionSelect }) {
                     transition: "background-color 0.3s ease",
                     cursor: "default",
                   }}
-                  // Disabled interaction by removing onClick
                 >
                   <Checkbox
                     checked={isSelected}

@@ -1,19 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Box, Typography, Paper, Button, Grid, Checkbox } from "@mui/material";
-import neuronImage from '../../Assets/neuron.jpg';
-import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons';
-import TourIcon from '@mui/icons-material/Tour';
-import GradeSharpIcon from '@mui/icons-material/GradeSharp';
-import Switch from '@mui/material/Switch';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Grid,
+  Checkbox,
+  CircularProgress
+} from "@mui/material";
+import TourIcon from "@mui/icons-material/Tour";
+import GradeSharpIcon from "@mui/icons-material/GradeSharp";
+import Switch from "@mui/material/Switch";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import { PrimaryButton, SecondaryButton } from "../Buttons/Buttons";
 
 function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestionClick, onOptionSelect }) {
   const [solvedQuestions, setSolvedQuestions] = useState([]);
   const [timeLeft, setTimeLeft] = useState(900);
-  const boxRefs = useRef([]);
-  const containerRef = useRef();
+  const [svgWidth, setSvgWidth] = useState(0);
   const [checkedStates, setCheckedStates] = useState({});
   const [isReviewMode, setIsReviewMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const boxRefs = useRef([]);
+  const containerRef = useRef();
 
   const handleCheckboxChange = (optionIndex, optionValue) => {
     const updatedCheckedStates = {};
@@ -24,7 +33,7 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
     onOptionSelect(optionValue);
   };
   
-  const handleNext = () => {
+  const handleNext = async () => {
     // Check if the current question has an answer
     const isAnswered = Object.keys(checkedStates).some(key => 
       key.startsWith(`${currentQuestionIndex}-`)
@@ -34,7 +43,15 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
       setSolvedQuestions([...solvedQuestions, currentQuestionIndex]);
     }
   
-    onNext(); // Move to the next question or submit on the last question
+    // If this is the last question, simulate submission with a loader
+    if (currentQuestionIndex === questions.length - 1) {
+      setIsSubmitting(true);
+      // Assume onNext returns a promise when submitting
+      await onNext();
+      setIsSubmitting(false);
+    } else {
+      onNext(); // Move to the next question or submit on the last question
+    }
   };
 
   const handleReviewToggle = () => {
@@ -49,6 +66,13 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
       return () => clearInterval(timer);
     }
   }, [timeLeft]);
+
+  // Compute the full scrollable width of the button container
+  useEffect(() => {
+    if (containerRef.current) {
+      setSvgWidth(containerRef.current.scrollWidth);
+    }
+  }, [questions]);
 
   const getBoxCenter = (index) => {
     if (boxRefs.current[index] && containerRef.current) {
@@ -106,8 +130,8 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
           sx={{
             display: "flex",
             gap: "8px",
-            flexWrap: "nowrap",
-            overflowX: "auto",
+            flexWrap: "nowrap", // prevents wrapping
+            overflowX: "auto",  // enables horizontal scroll when overflowing
             justifyContent: "start",
             position: "relative",
             marginTop: "6px",
@@ -121,7 +145,7 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
               position: "absolute",
               top: 0,
               left: 0,
-              width: "100%",
+              width: svgWidth, // covers full scrollable width
               height: "100%",
               pointerEvents: "none",
             }}
@@ -149,6 +173,7 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
               onClick={() => handleBoxClick(index)}
               ref={(el) => (boxRefs.current[index] = el)}
               sx={{
+                flexShrink: 0, // prevents button from shrinking and wrapping
                 width: "24px",
                 minWidth: 0,
                 height: "24px",
@@ -202,7 +227,7 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
       <Box
         sx={{
           borderRadius: 3,
-          backgroundColor: isReviewMode ? 'yellow' : 'white',
+          backgroundColor: isReviewMode ? '' : 'white',
           gap: '32px',
           padding: '16px',
           boxSizing: 'border-box',
@@ -295,7 +320,7 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
           <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
             <Grid container spacing={1}>
               {questions[currentQuestionIndex]?.options.map((option, index) => {
-                const optionText = option.text || option; // Extract `text` if `option` is an object
+                const optionText = option.text || option;
                 const isImageOption = typeof option === 'string' && option.match(/\.jpg|\.png|\.jpeg/);
                 return (
                   <Grid item xs={isImageOption ? 6 : 12} key={index}>
@@ -364,9 +389,13 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
           <SecondaryButton variant="contained" onClick={onBack} disabled={currentQuestionIndex === 0}>
             Back
           </SecondaryButton>
-          <PrimaryButton variant="contained" onClick={handleNext}>
-            {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"}
-          </PrimaryButton>
+          <PrimaryButton variant="contained" onClick={handleNext} disabled={isSubmitting}>
+  {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"}
+  {isSubmitting && (
+    <CircularProgress size={24} sx={{ color: "white", ml: 1 }} />
+  )}
+</PrimaryButton>
+
         </Box>
       </Box>
     </Box>

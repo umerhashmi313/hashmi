@@ -1,172 +1,246 @@
 import * as React from 'react';
-import { useState , useEffect} from "react";
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import Typography from '@mui/material/Typography';
+import { useState } from "react";
+import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+  Box,
+  Divider,
+  Collapse,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon
+} from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
-import NotesIcon from '@mui/icons-material/Notes';
 import QuizIcon from '@mui/icons-material/Quiz';
-import { Collapse, List, ListItem, ListItemText, Box, Divider, ListItemIcon } from "@mui/material";
+import NotesIcon from '@mui/icons-material/Notes';
+import FolderIcon from "@mui/icons-material/Folder";
 import { styled } from '@mui/material/styles';
-import FolderIcon from "@mui/icons-material/Folder"; // Example icon, replace as needed
 import { useNavigate } from "react-router-dom";
 
 const BlackDivider = styled(Divider)(({ theme }) => ({
-    background: 'black',
-    height: '0.1px',
-    margin: theme.spacing(1, 0),
-    boxShadow: '0 2px 4px rgba(255, 255, 255, 0.79)',
-    
+  background: 'black',
+  height: '0.1px',
+  margin: theme.spacing(1, 0),
+  boxShadow: '0 2px 4px rgba(255, 255, 255, 0.79)',
 }));
 
+/**
+ * This component recursively renders nested sections (chapters, etc.) and final content (video, quiz).
+ * For final content list items, the vertical connector line is modified so that it starts at the dot
+ * on the first item and ends at the dot on the last item.
+ */
+const CollapsibleOutline = ({
+  chapter,        // A single node from ordered_content (could be a section or final content)
+  activeIndex,
+  setActiveIndex,
+  handleVideoClick,
+  handleQuizClick
+}) => {
+  const [open, setOpen] = useState(false);
+  const children = chapter?.ordered_content || [];
+  const hasChildren = children.length > 0;
+  const isSection = chapter.type === "section";
 
+  return (
+    <Box sx={{ ml: isSection ? 2 : 0, mt: 1 }}>
+      {/* Render section/chapter names */}
+      {isSection && (
+        <Typography
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            cursor: hasChildren ? 'pointer' : 'default',
+            gap: '8px',
+          }}
+          onClick={() => {
+            if (hasChildren) {
+              setOpen(!open);
+            }
+          }}
+        >
+          {hasChildren && (
+            <ExpandMoreIcon
+              sx={{
+                transform: open ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "0.3s",
+              }}
+            />
+          )}
+          {chapter?.name || "Untitled Section"}
+        </Typography>
+      )}
 
-export default function AccordionUsage({ courseData , quizId}) {
-    const [activeIndex, setActiveIndex] = useState(null); // Lifted state up
-    const navigate = useNavigate();
-    console.log("courseData:", courseData); // Debugging
-    const handleQuizClick = () => {
-        // Redirect to /dashboard and pass the quizId via state (or you can use query params)
-        navigate("/dashboard", { state: { quizId } });
-      };
-    
-  
-    return (
-      <Box
-        sx={{
-          width: "100%",
-          display: "flex",
-          borderRadius: 8,
-          flexDirection: "column",
-          "& .MuiAccordion-root": { margin: 0 },
-        }}
-      >
+      {/* If there are children, collapse them */}
+      {hasChildren && (
+        <Collapse in={open} timeout="auto" unmountOnExit>
+          <List disablePadding>
+            {children.map((child, index, arr) => {
+              // For nested sections, recurse
+              if (child.type === "section") {
+                return (
+                  <CollapsibleOutline
+                    key={child.id}
+                    chapter={child}
+                    activeIndex={activeIndex}
+                    setActiveIndex={setActiveIndex}
+                    handleVideoClick={handleVideoClick}
+                    handleQuizClick={handleQuizClick}
+                  />
+                );
+              } else {
+                // Final content items (video/quiz/reading, etc.)
+                const isActive = activeIndex === index;
+                const isFirst = index === 0;
+                const isLast = index === arr.length - 1;
+                return (
+                  <ListItem
+                    key={child.id}
+                    sx={{
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px',
+                      pl: '32px',
+                      cursor: 'pointer',
+                      color: isActive ? '#FFFFFF' : '#A0A0A0',
+                      backgroundColor: isActive ? '#28527A' : 'transparent',
+                      borderRadius: '6px',
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                    onClick={() => {
+                      setActiveIndex(index);
+                      if (child.type === "video") {
+                        handleVideoClick?.(child);
+                      } else if (child.type === "quiz") {
+                        handleQuizClick?.(child);
+                      }
+                    }}
+                  >
+                    {/* Connector Line: adjust top and bottom so it does not extend beyond the dot */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: '18px',
+                        // For the first item, start at the dot’s center.
+                        // For the last, end at the dot’s center.
+                        top: isFirst ? 'calc(38% + 5px)' : 0,
+                        bottom: isLast ? 'calc(100% - (38% + 5px))' : 0,
+                        width: '2px',
+                        backgroundColor: '#78BBFF',
+                        zIndex: 0,
+                      }}
+                    />
+                    
+                    {/* Dot */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: '14px',
+                        top: '38%',
+                        width: isActive ? '12px' : '10px',
+                        height: isActive ? '12px' : '10px',
+                        borderRadius: '50%',
+                        backgroundColor: '#78BBFF',
+                        zIndex: 1,
+                        transition: 'all 0.2s ease-in-out',
+                      }}
+                    />
+                    
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <ListItemIcon
+                        sx={{ minWidth: 'unset', color: isActive ? '#FFFFFF' : '#A0A0A0' }}
+                      >
+                        {child.type === 'video' ? (
+                          <PlayCircleFilledIcon />
+                        ) : child.type === 'quiz' ? (
+                          <QuizIcon />
+                        ) : (
+                          <FolderIcon />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText primary={child.name || "Untitled"} />
+                    </Box>
+                  </ListItem>
+                );
+              }
+            })}
+          </List>
+        </Collapse>
+      )}
+    </Box>
+  );
+};
+
+export default function AccordionUsage({ courseData }) {
+  const [activeIndex, setActiveIndex] = useState(null);
+  const navigate = useNavigate();
+
+  const handleQuizClick = (quiz) => {
+    navigate("/dashboard", { state: { quizId: quiz.id } });
+  };
+
+  const handleVideoClick = (video) => {
+    navigate("/videopage", { state: { video } });
+  };
+
+  return (
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: 8,
+      }}
+    >
+      {/* Create a separate accordion for each top-level quarter */}
+      {courseData.sections?.[0]?.ordered_content?.map((quarter) => (
         <Accordion
+          key={quarter.id}
           sx={{
             backgroundColor: "#063565",
-            ":last-child": { borderBottomLeftRadius: "8px", borderBottomRightRadius: "8px" },
-            ":first-child": { borderTopRightRadius: "8px", borderTopLeftRadius: "8px" },
+            color: "white",
+            ":last-child": {
+              borderBottomLeftRadius: "8px",
+              borderBottomRightRadius: "8px",
+            },
+            ":first-child": {
+              borderTopRightRadius: "8px",
+              borderTopLeftRadius: "8px",
+            },
           }}
           disableGutters
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {/* ✅ Fixing subjects display */}
-              <Typography sx={{ color: "white" }}>
-                {courseData.subjects?.[0]?.name || "No Subject"}
-              </Typography>
-            </Box>
+            <Typography>{quarter.name}</Typography>
           </AccordionSummary>
-                    {/* {quarter.chapters.length > 0 && ( */}
-                        <AccordionDetails sx={{
-                            display: 'flex',
-                            backgroundColor: '#EEF0F2',
-                            flexDirection: 'column',
-                            gap: '8px',
-                            py: '16px',
-                            borderLeft: '4px solid black'
-                        }}>
-                            {/* {quarter.chapters.map((chapter, cIndex) => ( */}
-                                <Box >
-                                    <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <PlayCircleFilledIcon />
-                                        {courseData.direct_content.videos?.[0]?.title || "No Subject"}
-                                    </Typography>
-                                    <BlackDivider />
-                                    <CollapsibleOutline chapter={courseData.sections?.[0]} activeIndex={activeIndex} setActiveIndex={setActiveIndex} />
-                                    <BlackDivider />
-                                    <Box onClick={handleQuizClick} sx={{ cursor: "pointer" }}>
-              <Typography sx={{ display: 'flex', gap: '8px' }}>
-                <QuizIcon /> {courseData.direct_content.quizzes?.[0]?.title || "No Subject"}
-              </Typography>
-            </Box>
-                                    <BlackDivider />
-                                    <Typography sx={{ display: 'flex', gap: '8px' }}>
-                                    <NotesIcon />{courseData.direct_content.readingMaterial?.[0]?.title || "No Notes"}
-                                    </Typography>
-                                </Box>
-                        
-                        </AccordionDetails>
-                    
-                </Accordion>
-            
-        </Box>
-    );
+          <AccordionDetails
+            sx={{
+              display: "flex",
+              color: "black",
+              backgroundColor: "#EEF0F2",
+              flexDirection: "column",
+              borderLeft: "4px solid black",
+            }}
+          >
+            {quarter.ordered_content?.map((child) => (
+              <React.Fragment key={child.id}>
+                <CollapsibleOutline
+                  chapter={child}
+                  activeIndex={activeIndex}
+                  setActiveIndex={setActiveIndex}
+                  handleVideoClick={handleVideoClick}
+                  handleQuizClick={handleQuizClick}
+                />
+                <BlackDivider />
+              </React.Fragment>
+            ))}
+          </AccordionDetails>
+        </Accordion>
+      ))}
+    </Box>
+  );
 }
-
-const CollapsibleOutline = ({ chapter, activeIndex, setActiveIndex }) => {
-    const [open, setOpen] = useState(false);
-
-    return (
-       <Box>
-            <Typography
-                sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}
-                onClick={() => setOpen(!open)}
-            >
-                <ExpandMoreIcon sx={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "0.3s" }} />
-                {chapter?.title || "Untitled Section"} {/* Handle undefined title */}
-            </Typography>
-
-            <Collapse in={open} timeout="auto" unmountOnExit>
-                <List>
-                    {(chapter?.sub_sections || []).map((subsection, index) => {  // Ensure subsections is an array
-                        const isActive = activeIndex === index;
-
-                        return (
-                            <ListItem
-                                key={index}
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '4px',
-                                    position: 'relative',
-                                    pl: '32px',
-                                    cursor: 'pointer',
-                                    color: isActive ? '#FFFFFF' : '#A0A0A0',
-                                    backgroundColor: isActive ? '#28527A' : 'transparent',
-                                    borderRadius: '6px',
-                                    transition: 'all 0.2s ease-in-out',
-                                    '&::before': chapter?.subsections?.length > 1 ? { // Only show when multiple subsections exist
-                                        content: '""',
-                                        position: 'absolute',
-                                        left: '18px',
-                                        top: index === 0 ? '45%' : 0,
-                                        bottom: index === chapter.subsections.length - 1 ? '50%' : 0,
-                                        width: '2px',
-                                        backgroundColor: '#78BBFF',
-                                        opacity: '40%',
-                                    } : {},
-                                }}
-                                onClick={() => setActiveIndex(index)}
-                            >
-                                {/* Step Icon (Dot) */}
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        left: '14px',
-                                        top: '38%',
-                                        width: isActive ? '12px' : '10px',
-                                        height: isActive ? '12px' : '10px',
-                                        borderRadius: '50%',
-                                        backgroundColor: '#78BBFF',
-                                        opacity: 1,
-                                        transition: 'all 0.2s ease-in-out',
-                                    }}
-                                />
-
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <ListItemIcon sx={{ minWidth: 'unset', color: isActive ? '#FFFFFF' : '#A0A0A0' }}>
-                                        {subsection?.icon || <FolderIcon />} {/* Default icon */}
-                                    </ListItemIcon>
-                                    <ListItemText primary={subsection?.title || "Untitled Subsection"} />
-                                </Box>
-                            </ListItem>
-                        );
-                    })}
-                </List>
-            </Collapse>
-        </Box>
-    );
-};

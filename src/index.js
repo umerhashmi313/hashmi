@@ -5,12 +5,16 @@ import Desk from './Components/Authorization/Desk';
 import { BrowserRouter } from "react-router-dom";
 import App from './App';
 import AppRoutes from './AppRoutes';
+import { QueryClient, QueryClientProvider } from 'react-query';
+const queryClient = new QueryClient();
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <BrowserRouter>
+  <QueryClientProvider client={queryClient}>
     <Desk />
+    </QueryClientProvider>
   </BrowserRouter>
 );
 

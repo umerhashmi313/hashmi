@@ -1,70 +1,53 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Card, CardContent, Typography, Avatar, Box, CircularProgress } from "@mui/material";
 import AccordionUsage from "./SingleCourse";
 import { useLocation } from "react-router-dom";
+import { useQuery } from "react-query";
 
 const SingleCourseCard = () => {
-  const [courseData, setCourseData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
-  const courseId = location.state?.courseId; 
-  
+  const courseId = location.state?.courseId;
 
-  useEffect(() => {
+  const fetchCourseData = async () => {
     if (!courseId) {
-      console.error("No course id provided.");
-      setLoading(false);
-      return;
+      throw new Error("No course id provided.");
     }
-    const fetchCourseData = async () => {
-      const authToken = localStorage.getItem("authToken"); // Get token from local storage
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) {
+      throw new Error("No auth token found.");
+    }
+    const response = await fetch(`https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/?id=${courseId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data[0]; // Assuming the first course is the one needed.
+  };
 
-      if (!authToken) {
-        console.error("No auth token found.");
-        setLoading(false);
-        return;
-      }
+  const { data: courseData, error, isLoading } = useQuery(['course', courseId], fetchCourseData, {
+    enabled: !!courseId, // Only run if courseId exists.
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes.
+  });
 
-      try {
-        const response = await fetch(`https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/?id=${courseId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`, // Include token in headers
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setCourseData(data[0]); // Assuming first course in the list
-        console.log(data)
-      } catch (error) {
-        console.error("Error fetching course data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCourseData();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return <CircularProgress />;
   }
-
-  if (!courseData) {
+  if (error || !courseData) {
     return <Typography>Error loading course data.</Typography>;
   }
 
   const quizId =
-  courseData.direct_content &&
-  courseData.direct_content.quizzes &&
-  courseData.direct_content.quizzes.length > 0
-    ? courseData.direct_content.quizzes[0].id
-    : null;
+    courseData.direct_content &&
+    courseData.direct_content.quizzes &&
+    courseData.direct_content.quizzes.length > 0
+      ? courseData.direct_content.quizzes[0].id
+      : null;
 
   return (
     <Card
@@ -77,7 +60,7 @@ const SingleCourseCard = () => {
         padding: "16px",
       }}
     >
-      {/* Course Image Placeholder with Background Color */}
+      {/* Course Image Placeholder */}
       <Box sx={{ height: 290, bgcolor: "#001F3F", borderRadius: 2 }} />
 
       {/* Course Details */}
@@ -89,7 +72,7 @@ const SingleCourseCard = () => {
           {courseData.course.description}
         </Typography>
 
-        {/* Instructor Info (Static for now, since API doesn't provide it) */}
+        {/* Instructor Info */}
         <Box display="flex" alignItems="center" mt={2}>
           <Avatar sx={{ bgcolor: "green" }}>B</Avatar>
           <Typography variant="body1" sx={{ ml: 1 }}>
@@ -103,8 +86,7 @@ const SingleCourseCard = () => {
         The Course Includes:
       </Typography>
       <Box>
-      <AccordionUsage courseData={courseData} quizId={quizId} />
-
+        <AccordionUsage courseData={courseData} quizId={quizId} />
       </Box>
     </Card>
   );

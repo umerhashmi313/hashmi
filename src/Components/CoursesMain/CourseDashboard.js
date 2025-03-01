@@ -1,48 +1,33 @@
 import React from "react";
-import CourseCard from "./CourseCard"; // Importing the CourseCard component
-import { Box, Typography , Chip } from "@mui/material";
-import { useState , useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import CourseCard from "./CourseCard";
+import { Box, Typography, Chip } from "@mui/material";
+import { useQuery } from "react-query";
 
-export default function CourseList() {
-
-  const Navigate = useNavigate()
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
+export default function CourseList({onSelectCourse}) {
+  const fetchCourses = async () => {
     const storedToken = localStorage.getItem("authToken");
     if (!storedToken) {
-      console.log("No token found, aborting fetch.");
-      setLoading(false);
-      return;
+      throw new Error("No token found");
     }
-
-    fetch("https://backend-lms-xpp7.onrender.com/api/courses/", {
+    const response = await fetch("https://backend-lms-xpp7.onrender.com/api/courses/", {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${storedToken}`,
       },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Failed to fetch courses: ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setCourses(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch courses: ${response.statusText}`);
+    }
+    return response.json();
+  };
 
-  if (loading) return <Typography>Loading courses...</Typography>;
-  if (error) return <Typography>Error: {error}</Typography>;
+  const { data: courses, error, isLoading } = useQuery("courses", fetchCourses, {
+    staleTime: 5 * 60 * 1000, // cache courses for 5 minutes
+  });
+
+  if (isLoading) return <Typography>Loading courses...</Typography>;
+  if (error) return <Typography>Error: {error.message}</Typography>;
+
   return (
     <Box
       sx={{
@@ -50,10 +35,10 @@ export default function CourseList() {
         flexDirection: "column",
         gap: "8px",
         padding: "16px",
-        backgroundColor: "white", // Light background for the parent container
+        backgroundColor: "white",
         borderRadius: 3,
         boxShadow: 3,
-        width:'100%'
+        width: "100%",
       }}
     >
       {/* Header Section */}
@@ -64,17 +49,17 @@ export default function CourseList() {
         When you land on a sample
       </Typography>
 
-       <Chip
-                  label="Course Title"
-                  sx={{
-                    backgroundColor: "#E7F7FF",
-                    color: "#0EAAFF",
-                    height: "25px",
-                    width:'100px'
-                  }}
-                />
+      <Chip
+        label="Course Title"
+        sx={{
+          backgroundColor: "#E7F7FF",
+          color: "#0EAAFF",
+          height: "25px",
+          width: "100px",
+        }}
+      />
 
-      <Typography variant="h5" sx={{ fontWeight: "bold", my:'4px' }}>
+      <Typography variant="h5" sx={{ fontWeight: "bold", my: "4px" }}>
         Batch:
       </Typography>
 
@@ -82,16 +67,15 @@ export default function CourseList() {
       <Box
         sx={{
           display: "grid",
-         gridTemplateColumns: {
-            xs: "1fr", // Single column layout for screens below 580px
-            sm: "repeat(2, 1fr)", // Two columns for screens above 580px
+          gridTemplateColumns: {
+            xs: "1fr", // Single column on small screens
+            sm: "repeat(2, 1fr)",
           },
-          
           gap: "16px",
         }}
       >
         {courses.map((course) => (
-          <CourseCard key={course.id} course={course} />
+          <CourseCard key={course.id} course={course} onSelectCourse={onSelectCourse} />
         ))}
       </Box>
     </Box>

@@ -1,53 +1,72 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Login from "./Login";
-import App from "../../App";
+import App from "../../App";      // Regular user app
+import App2 from "../../App2";    // Admin app
 import SignPage from "./SignIn";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Main = () => {
   const [authToken, setAuthToken] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch the auth token from localStorage
+    // Fetch token and role from localStorage
     const token = localStorage.getItem("authToken");
+    const role = localStorage.getItem("userRole");
+    
     setAuthToken(token);
+    setUserRole(role);
   }, []);
 
   const handleSignUpSuccess = () => {
-    // Navigate to the login page after successful sign-up
     navigate("/login", { replace: true });
   };
 
-  const handleLoginSuccess = (token) => {
+  const handleLoginSuccess = (token, role) => {
     if (!token) {
       console.error("No token received in handleLoginSuccess");
       return;
     }
 
-    // Save the auth token and navigate to the main app
+    // Save the auth token and role
     localStorage.setItem("authToken", token);
+    localStorage.setItem("userRole", role);
     setAuthToken(token);
-    navigate("/courses", { replace: true });
+    setUserRole(role);
+
+    // Navigate based on role
+    navigate(role === "admin" ? "/admin-dashboard" : "/courses", { replace: true });
   };
 
   const handleLogout = () => {
-    // Clear the auth token and navigate back to the sign-up page
+    // Clear stored credentials
     localStorage.removeItem("authToken");
+    localStorage.removeItem("userRole");
     setAuthToken(null);
+    setUserRole(null);
     navigate("/", { replace: true });
   };
 
-  if (!authToken) {
-    // If no auth token is found, decide between SignUp and Login
-    if (window.location.pathname === "/login") {
-      return <Login onLogin={handleLoginSuccess} />;
-    }
-    return <SignPage onSignUpSuccess={handleSignUpSuccess} />;
-  }
+  return (
+    <>
+      <ToastContainer />
 
-  // If the user is authenticated, render the main app
-  return <App onLogout={handleLogout} />;
+      {!authToken ? (
+        window.location.pathname === "/login" ? (
+          <Login onLogin={handleLoginSuccess} />
+        ) : (
+          <SignPage onSignUpSuccess={handleSignUpSuccess} />
+        )
+      ) : userRole === "admin" ? (
+        <App2 onLogout={handleLogout} />
+      ) : (
+        <App onLogout={handleLogout} />
+      )}
+    </>
+  );
 };
 
 export default Main;

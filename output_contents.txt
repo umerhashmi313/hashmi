@@ -1,0 +1,5498 @@
+--- course ---
+import * as React from 'react';
+import { useState , useEffect} from "react";
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import Typography from '@mui/material/Typography';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
+import NotesIcon from '@mui/icons-material/Notes';
+import QuizIcon from '@mui/icons-material/Quiz';
+import { Collapse, List, ListItem, ListItemText, Box, Divider, ListItemIcon } from "@mui/material";
+import { styled } from '@mui/material/styles';
+
+const BlackDivider = styled(Divider)(({ theme }) => ({
+    background: 'black',
+    height: '0.1px',
+    margin: theme.spacing(1, 0),
+    boxShadow: '0 2px 4px rgba(255, 255, 255, 0.79)',
+    
+}));
+
+
+const courseContent = [
+    {
+        title: "Quarter 1 Outline",
+        chapters: [
+            {
+                title: "Chapter 1",
+                introVideo: "Chapter 1 Intro Video",
+                materials: [
+                    { icon: <PlayCircleFilledIcon />, title: "Topic 1 Video", duration: "20 Minutes" },
+                    { icon: <NotesIcon />, title: "Topic 1 Notes", duration: "15 Minutes" },
+                    { icon: <QuizIcon />, title: "Topic 1 Quiz", duration: "10 Minutes" },
+                ]
+            }
+        ]
+    },
+    { title: "Quarter 2 Outline", chapters: [] },
+    { title: "First Half Book Quiz", chapters: [], icon: <QuizIcon /> },
+    { title: "Quarter 3 Outline", chapters: [] },
+    { title: "Quarter 4 Outline", chapters: [] },
+    { title: "Second Half Book Quiz", chapters: [], icon: <QuizIcon /> }
+];
+
+export default function AccordionUsage() {
+    const [activeIndex, setActiveIndex] = useState(null); // Lifted state up
+    const [courseData, setCourseData] = useState([]);
+    const [subjectDetails, setSubjectDetails] = useState({}); // To store subject details by ID
+
+    // Fetch course data and subject details using async/await
+    useEffect(() => {
+        const fetchCourseData = async () => {
+            try {
+                const authToken = localStorage.getItem('authToken'); // Get the token from localStorage
+                const response = await fetch('https://backend-lms-xpp7.onrender.com/api/courses/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`, // Add the Authorization header with the token
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setCourseData(data); // Set the fetched data to the state
+
+                    // After getting the course data, fetch subjects based on their IDs
+                    const subjectIds = data.flatMap(course => course.subjects); // Extract subject IDs
+                    await fetchSubjectsByIds(subjectIds); // Wait for the subject data to be fetched
+                } else {
+                    console.error("Error fetching course data:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error fetching course data:", error);
+            }
+        };
+
+        fetchCourseData();
+    }, []);
+
+    // Fetch subject details by IDs using async/await
+    const fetchSubjectsByIds = async (subjectIds) => {
+        const authToken = localStorage.getItem('authToken'); // Get the token from localStorage
+        try {
+            const subjectDetailsMap = {};
+
+            // Loop through each subject ID and fetch subject details
+            for (let id of subjectIds) {
+                const response = await fetch(`https://backend-lms-xpp7.onrender.com/api/subjects/${id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const subject = await response.json();
+                    subjectDetailsMap[subject.id] = subject; // Map the subject details by ID
+                } else {
+                    console.error(`Error fetching subject ${id}:`, response.statusText);
+                }
+            }
+
+            setSubjectDetails(subjectDetailsMap); // Update state with the fetched subjects
+        } catch (error) {
+            console.error("Error fetching subjects:", error);
+        }
+    };
+
+    return (
+        <Box sx={{
+            width: '100%',
+            display: 'flex',
+            borderRadius: 8,
+            flexDirection: 'column',
+            '& .MuiAccordion-root': { margin: 0 },
+        }}>
+            {courseContent.map((quarter, qIndex) => (
+                <Accordion key={qIndex} sx={{
+                    backgroundColor: '#063565',
+                    ":last-child": { borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' },
+                    ":first-child": { borderTopRightRadius: '8px', borderTopLeftRadius: '8px' }
+                }} disableGutters>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'white' }} />}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {quarter.icon && <Box sx={{ color: 'white' }}>{quarter.icon}</Box>}
+                            <Typography sx={{ color: 'white' }}>{quarter.title}</Typography>
+                        </Box>
+                    </AccordionSummary>
+                    {quarter.chapters.length > 0 && (
+                        <AccordionDetails sx={{
+                            display: 'flex',
+                            backgroundColor: '#EEF0F2',
+                            flexDirection: 'column',
+                            gap: '8px',
+                            py: '16px',
+                            borderLeft: '4px solid black'
+                        }}>
+                            {quarter.chapters.map((chapter, cIndex) => (
+                                <Box key={cIndex}>
+                                    <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <PlayCircleFilledIcon />
+                                        {chapter.introVideo}
+                                    </Typography>
+                                    <BlackDivider />
+                                    <CollapsibleOutline chapter={chapter} activeIndex={activeIndex} setActiveIndex={setActiveIndex} />
+                                    <BlackDivider />
+                                    <Typography sx={{ display: 'flex', gap: '8px' }}>
+                                        <NotesIcon /> Chapter 1 Notes
+                                    </Typography>
+                                    <BlackDivider />
+                                    <Typography sx={{ display: 'flex', gap: '8px' }}>
+                                        <QuizIcon /> Chapter 1 Quiz
+                                    </Typography>
+                                </Box>
+                            ))}
+                        </AccordionDetails>
+                    )}
+                </Accordion>
+            ))}
+        </Box>
+    );
+}
+
+const CollapsibleOutline = ({ chapter, activeIndex, setActiveIndex }) => {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <Box>
+            <Typography
+                sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}
+                onClick={() => setOpen(!open)}
+            >
+                <ExpandMoreIcon sx={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "0.3s" }} />
+                Chapter 1 Outline
+            </Typography>
+    
+            <Collapse in={open} timeout="auto" unmountOnExit>
+                <List>
+                    {chapter.materials.map((topic, index) => {
+                        const isActive = activeIndex === index;
+
+                        return (
+                            <ListItem
+                                key={index}
+                                sx={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '4px',
+                                    position: 'relative',
+                                    pl: '32px',
+                                    cursor: 'pointer',
+                                    color: isActive ? '#FFFFFF' : '#A0A0A0',
+                                    backgroundColor: isActive ? '#28527A' : 'transparent',
+                                    borderRadius: '6px',
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&::before': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        left: '18px',
+                                        top: index === 0 ? '45%' : 0,
+                                        bottom: index === chapter.materials.length - 1 ? '50%' : 0,
+                                        width: '2px',
+                                        backgroundColor: '#78BBFF',
+                                        opacity: '40%',
+                                    }
+                                }}
+                                onClick={() => setActiveIndex(index)}
+                            >
+                                {/* Step Icon (Dot) */}
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        left: '14px',
+                                        top: '38%',
+                                        width: isActive ? '12px' : '10px',
+                                        height: isActive ? '12px' : '10px',
+                                        borderRadius: '50%',
+                                        backgroundColor: '#78BBFF',
+                                        opacity: 1,
+                                        transition: 'all 0.2s ease-in-out',
+                                    }}
+                                />
+
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <ListItemIcon sx={{ minWidth: 'unset', color: isActive ? '#FFFFFF' : '#A0A0A0' }}>
+                                        {topic.icon}
+                                    </ListItemIcon>
+                                    <ListItemText primary={topic.title} />
+                                </Box>
+
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                    <ListItemText primary={topic.duration} />
+                                </Box>
+                            </ListItem>
+                        );
+                    })}
+                </List>
+            </Collapse>
+        </Box>
+    );
+};
+
+--- Scrapper.js ---
+const fs = require('fs');
+const path = require('path');
+
+// Define the folders and files to ignore
+const IGNORE_DIRS = new Set(['build', '.git', 'node_modules', 'public', 'Assets']); // Add folder names to ignore
+const IGNORE_FILES = new Set(['app.test.js', 'AppRoutes.js', 'logo.svg', 'reportWebVitals.js', 'setupTests.js', '.env', '.gitignore', 'package-lock.json', 'package.json', 'README.md', 'demosss']); // Add file names to ignore
+
+function readAllText(folderPath, outputFile) {
+    if (!fs.existsSync(folderPath)) {
+        console.log(`The folder ${folderPath} does not exist.`);
+        return;
+    }
+
+    const output = fs.createWriteStream(outputFile, { encoding: 'utf-8' });
+
+    function traverseDirectory(currentPath) {
+        const entries = fs.readdirSync(currentPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+            const fullPath = path.join(currentPath, entry.name);
+
+            if (entry.isDirectory()) {
+                if (!IGNORE_DIRS.has(entry.name)) {
+                    traverseDirectory(fullPath);
+                }
+            } else if (entry.isFile()) {
+                if (!IGNORE_FILES.has(entry.name)) {
+                    try {
+                        const content = fs.readFileSync(fullPath, 'utf-8');
+                        output.write(`--- ${path.relative(folderPath, fullPath)} ---\n`);
+                        output.write(content);
+                        output.write('\n\n'); // Add spacing between files
+                    } catch (error) {
+                        output.write(`Failed to read ${fullPath}: ${error.message}\n\n`);
+                    }
+                }
+            }
+        }
+    }
+
+    traverseDirectory(folderPath);
+    output.end();
+    console.log(`All desired file contents have been written to '${outputFile}'.`);
+}
+
+// Replace with your actual folder path
+const folderToRead = 'C:\\Users\\hashm\\Desktop\\New folder (12)\\myapp'; // e.g., 'C:\\path\\to\\your\\folder'
+const outputTxtFile = 'output_contents.txt'; // Specify your desired output file name
+
+readAllText(folderToRead, outputTxtFile);
+
+--- src\App.css ---
+*{
+    margin: 0;
+    padding: 0;
+}
+
+--- src\App.js ---
+import React, { useState, useCallback, Suspense } from 'react';
+import { Box } from '@mui/material';
+import { Route, Routes, useLocation } from 'react-router-dom';
+import Sidebar from './Components/Sidebar/Sidebar';
+import Header from './Components/Header/Header';
+import Sidebar2 from './Components/Sidebar2/Sidebar2';
+import Nav from './Components/MobileNav/Nav';
+import ProtectedRoute from './Components/ProtectedRoutes/ProtectedRoutes';
+import './App.css';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+// Lazy load route components for improved initial load time.
+const ScholarshipCard = React.lazy(() => import('./Components/Dashboard/Dashboard'));
+const CourseList = React.lazy(() => import('./Components/CoursesMain/CourseDashboard'));
+const TopQuestions = React.lazy(() => import('./Components/Quiz/Quiz'));
+const Courses = React.lazy(() => import('./Components/Courses/Courses'));
+const Videopage = React.lazy(() => import('./Components/Videopage/Videopage'));
+const Notespage = React.lazy(() => import('./Components/Notes/Notes'));
+const SingleCourseCard = React.lazy(() => import('./Components/SingleCourse/SingleCourseDesk'));
+
+export default function App({ onLogout }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const headerHeight = 64;
+
+  // Memoize the toggle function to avoid unnecessary re-renders.
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
+  const location = useLocation();
+  const showSidebar2 = ['/questions', '/dashboard'].includes(location.pathname.toLowerCase());
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      {/* Sidebar */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          zIndex: 1200,
+          display: { xs: 'none', sm: 'block' },
+          flexShrink: 0,
+          transition: 'width 0.3s ease',
+        }}
+      >
+        {showSidebar2 ? (
+          <Sidebar2 onLogout={onLogout} sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+        ) : (
+          <Sidebar onLogout={onLogout} sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+        )}
+      </Box>
+
+      {/* Main Content Area */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          minHeight: '100vh',
+          overflow: 'auto',
+          marginLeft: { xs: 0, sm: sidebarOpen ? '235px' : '60px' },
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            height: headerHeight,
+            display: { xs: 'none', sm: 'flex' },
+            flexShrink: 0,
+            position: 'sticky',
+            top: 0,
+            zIndex: 100,
+            backgroundColor: 'background.paper',
+            width: '100%',
+          }}
+        >
+          <Header />
+        </Box>
+
+        {/* Mobile Header Sections */}
+        <Box
+          sx={{
+            display: { xs: 'flex', sm: 'none' },
+            height: '248px',
+            width: '100%',
+            flexShrink: 0,
+            backgroundColor: '#03162A',
+            position: 'fixed',
+            zIndex: 0,
+          }}
+        ></Box>
+        <Box
+          sx={{
+            display: { xs: 'flex', sm: 'none' },
+            height: '60px',
+            width: '100%',
+            flexShrink: 0,
+            backgroundColor: '#03162A',
+            position: 'fixed',
+            zIndex: 2,
+          }}
+        >
+          <Nav onLogout={onLogout} />
+        </Box>
+
+        {/* Scrollable Content */}
+        <Box
+          sx={{
+            flex: 1,
+            backgroundColor: '#f5f6fa',
+            overflowY: 'auto',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Suspense fallback={<div>Loading...</div>}>
+              {/* Left Card (66%) */}
+              <Box
+                sx={{
+                  minWidth: 0,
+                  display: { xs: 'none', sm: 'flex' },
+                  gap: '8px',
+                  padding: '16px',
+                }}
+              >
+                <Routes>
+                  <Route path="/Dashboard" element={<ProtectedRoute element={<ScholarshipCard />} />} />
+                  <Route path="/courses" element={<ProtectedRoute element={<CourseList />} />} />
+                  <Route path="/questions" element={<ProtectedRoute element={<TopQuestions />} />} />
+                  <Route path="/coursesDetail" element={<ProtectedRoute element={<Courses />} />} />
+                  <Route path="/videopage" element={<ProtectedRoute element={<Videopage />} />} />
+                  <Route path="/notes" element={<ProtectedRoute element={<Notespage />} />} />
+                  <Route path="/SingleCourse" element={<ProtectedRoute element={<SingleCourseCard />} />} />
+                </Routes>
+              </Box>
+
+              {/* Mobile View Routes */}
+              <Box
+                sx={{
+                  display: { xs: 'flex', sm: 'none' },
+                  width: '100%',
+                  position: 'absolute',
+                  overflowX: 'hidden',
+                  top: '220px',
+                }}
+              >
+                <Routes>
+                  <Route path="/questions" element={<ProtectedRoute element={<TopQuestions />} />} />
+                </Routes>
+              </Box>
+              <Box
+                sx={{
+                  display: { xs: 'flex', sm: 'none' },
+                  width: '95%',
+                  position: 'absolute',
+                  overflowX: 'hidden',
+                  top: '65px',
+                }}
+              >
+                <Routes>
+                  <Route path="/Dashboard" element={<ProtectedRoute element={<ScholarshipCard />} />} />
+                  <Route path="/courses" element={<ProtectedRoute element={<CourseList />} />} />
+                  <Route path="/videopage" element={<ProtectedRoute element={<Videopage />} />} />
+                  <Route path="/notes" element={<ProtectedRoute element={<Notespage />} />} />
+                  <Route path="/SingleCourse" element={<ProtectedRoute element={<SingleCourseCard />} />} />
+                </Routes>
+              </Box>
+            </Suspense>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+
+--- src\App.test.js ---
+import { render, screen } from '@testing-library/react';
+import App from './App';
+
+test('renders learn react link', () => {
+  render(<App />);
+  const linkElement = screen.getByText(/learn react/i);
+  expect(linkElement).toBeInTheDocument();
+});
+
+
+--- src\Components\Authorization\Desk.js ---
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Login from "./Login";
+import App from "../../App";
+import SignPage from "./SignIn";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+const Main = () => {
+  const [authToken, setAuthToken] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch the auth token from localStorage
+    const token = localStorage.getItem("authToken");
+    setAuthToken(token);
+  }, []);
+
+  const handleSignUpSuccess = () => {
+    // Navigate to the login page after successful sign-up
+    navigate("/login", { replace: true });
+  };
+
+  const handleLoginSuccess = (token) => {
+    if (!token) {
+      console.error("No token received in handleLoginSuccess");
+      return;
+    }
+
+    // Save the auth token and navigate to the main app
+    localStorage.setItem("authToken", token);
+    setAuthToken(token);
+    navigate("/courses", { replace: true });
+  };
+
+  const handleLogout = () => {
+    // Clear the auth token and navigate back to the sign-up page
+    localStorage.removeItem("authToken");
+    setAuthToken(null);
+    navigate("/", { replace: true });
+  };
+
+  return (
+    <>
+      {/* This ToastContainer will make toast notifications available for all routes */}
+      <ToastContainer />
+
+      {!authToken ? (
+        window.location.pathname === "/login" ? (
+          <Login onLogin={handleLoginSuccess} />
+        ) : (
+          <SignPage onSignUpSuccess={handleSignUpSuccess} />
+        )
+      ) : (
+        <App onLogout={handleLogout} />
+      )}
+    </>
+  );
+};
+
+export default Main;
+
+
+--- src\Components\Authorization\Login.js ---
+import React, { useState } from 'react';
+import { Box, TextField, Button, Typography, Container, Alert, Link, Checkbox, FormControlLabel, CircularProgress, InputAdornment, IconButton } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons';
+import backgroundImage from '../../Assets/mntr.svg';
+import LogoImage from '../../Assets/logo.svg';
+import IllustrationImage from '../../Assets/illustration.svg';
+import { Link as RouterLink } from "react-router-dom";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+// Make sure to initialize react-toastify somewhere in your app, for example in your root component:
+// toast.configure();
+
+const LoginPage = ({ onLogin }) => {
+  console.log("LoginPage received onLogin:", onLogin); // Debugging line
+
+  // State for user credentials, error message, loading status and password visibility
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Handle login API call
+  const handleLogin = async () => {
+    setError(''); // Clear previous errors
+    setIsLoading(true); // Start loader
+
+    try {
+      const response = await fetch('https://backend-lms-xpp7.onrender.com/api/Login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      console.log("Raw Response:", response); // Debugging API response
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Invalid email or password'); // Authentication error
+        } else if (response.status === 500) {
+          setError('Server error. Please try again later.');
+        } else {
+          setError(`Error: ${response.statusText}`);
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Parsed Response Data:", data); // Debugging API response
+
+      if (!data.access) {
+        console.error("No access token found in API response.");
+        setIsLoading(false);
+        return;
+      }
+
+      toast.success("Login Successful", {
+        autoClose: 2000,
+        hideProgressBar: true,
+        style: {
+          backgroundColor: "#4caf50", // Customize the green color as needed
+          color: "white",
+        },
+      });
+      
+      
+
+      // Store token and user id in local storage
+      localStorage.setItem('authToken', data.access);
+      localStorage.setItem('userId', data.user_id);
+
+      console.log("Token & User ID Stored:", {
+        token: localStorage.getItem("authToken"),
+        userId: localStorage.getItem("userId"),
+      });
+
+      // Immediately call onLogin to navigate into the app
+      onLogin(data.access);
+    } catch (error) {
+      console.error("Login Error:", error);
+      setError('Network error. Please check your connection.');
+    }
+    setIsLoading(false); // Stop loader when operation completes
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  return (
+    <Container maxWidth="xl" sx={{ display: 'flex', height: { xs: '100%', sm: '100vh' }, m: '0' }}>
+      <Box
+        sx={{
+          display: { xs: 'none', sm: 'flex' },
+          flex: 2.8,
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          height: 'auto',
+        }}
+      ></Box>
+
+      <Box sx={{ flex: 1, display: 'flex', width: '100%', flexDirection: 'column', backgroundColor: '#fff', padding: '48px', gap: '48px', ml: { xs: '-25px' } }}>
+        <Box
+          sx={{
+            width: '100%',
+            height: '50px',
+            backgroundImage: `url(${LogoImage})`,
+            backgroundSize: 'contain',
+            backgroundPosition: 'start',
+            backgroundRepeat: 'no-repeat',
+            marginBottom: 2,
+            display: 'flex',
+          }}
+        />
+        <Box sx={{ gap: '24px' }}>
+          <Box
+            sx={{
+              width: '100%',
+              overflowX: 'hidden',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '244px',
+              backgroundImage: `url(${IllustrationImage})`,
+              backgroundSize: 'contain',
+              backgroundPosition: 'start',
+              backgroundRepeat: 'no-repeat',
+              marginBottom: 2,
+              display: 'flex',
+            }}
+          />
+          <Box sx={{ gap: '48px' }}>
+            <Typography sx={{ fontSize: '20px', fontWeight: '800' }}>Welcome! Sign in to get started.</Typography>
+
+            <Box>
+              <TextField
+                variant="outlined"
+                placeholder="Email or phone number"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                fullWidth
+                sx={{
+                  backgroundColor: "#E9E9E9",
+                  borderRadius: "8px",
+                  marginTop: '10px',
+                  '& fieldset': { border: 'none' },
+                }}
+              />
+
+              <TextField
+                variant="outlined"
+                placeholder="Enter password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                fullWidth
+                sx={{
+                  backgroundColor: "#E9E9E9",
+                  borderRadius: "8px",
+                  marginTop: '10px',
+                  '& fieldset': { border: 'none' },
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={togglePasswordVisibility} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+              />
+
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 1 }}>
+                <FormControlLabel control={<Checkbox />} label="Remember me" />
+                <Link href="#" variant="body2">
+                  Forgot password?
+                </Link>
+              </Box>
+            </Box>
+
+            <Box sx={{ gap: '20px', display: 'flex', flexDirection: 'column' }}>
+              <PrimaryButton
+                sx={{ width: '100%' }}
+                onClick={handleLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? <CircularProgress size={24} sx={{color:'white'}} /> : "Login"}
+              </PrimaryButton>
+              {/* Uncomment below if needed
+              <SecondaryButton sx={{ backgroundColor: '#31CEB8', width: '100%', my: '30px' }}>
+                Sign Up With Google
+              </SecondaryButton> */}
+            </Box>
+
+            {error && <Typography color="error">{error}</Typography>}
+
+            <Box>
+              <Typography>
+                Don't have an account? <Link to="/signup" component={RouterLink}>SignUp</Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Container>
+  );
+};
+
+export default LoginPage;
+
+
+--- src\Components\Authorization\SignIn.js ---
+import React, { useState } from 'react';
+import { Box, Typography, Container, Link, Checkbox, FormControlLabel, CircularProgress, TextField, InputAdornment, IconButton } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons';
+import backgroundImage from '../../Assets/mntr.svg';
+import LogoImage from '../../Assets/logo.svg';
+import IllustrationImage from '../../Assets/illustration.svg';
+import { Link as RouterLink } from "react-router-dom";
+import { toast } from "react-toastify";
+
+const SignPage = ({ onSignUpSuccess }) => {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // Loader state
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Toggle the visibility of the password
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  // Handle Sign Up API call
+  const handleSignUp = async () => {
+    setError(""); // Clear previous errors
+    setIsLoading(true); // Start loader
+
+    try {
+      const payload = {
+        email,
+        full_name: fullName,
+        role: "student",
+        is_staff: false,
+        is_superuser: false,
+        password,
+        roll_no: "null",
+      };
+
+      const response = await fetch("https://backend-lms-xpp7.onrender.com/api/Students/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        setError(`Error: ${errorText}`);
+        setIsLoading(false); // Stop loader on error
+        return;
+      }
+
+      // Display a success toast and redirect to login page
+      toast.success("Sign-Up Successful! Please log in.", {
+        // position: toast.POSITION.TOP_RIGHT,
+        autoClose: 2000,
+        hideProgressBar: true,
+        style: {
+          backgroundColor: "#4caf50", // Customize the green color as needed
+          color: "white",
+        },
+      });
+      
+      onSignUpSuccess();
+    } catch (error) {
+      console.error("Sign-Up Error:", error);
+      setError("Network error. Please check your connection.");
+    }
+    setIsLoading(false); // Stop loader once operation completes
+  };
+
+  return (
+    <Container maxWidth="xl" sx={{ display: 'flex', height: '100%', m: '0' }}>
+      <Box
+        sx={{
+          flex: 2.8,
+          display: { xs: 'none', sm: 'flex' },
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          height: 'auto',
+        }}
+      ></Box>
+
+      <Box sx={{ flex: 1, display: 'flex', width: '100%', flexDirection: 'column', backgroundColor: '#fff', padding: '48px', gap: '48px', ml: { xs: '-25px' } }}>
+        <Box
+          sx={{
+            width: '100%',
+            height: '50px',
+            backgroundImage: `url(${LogoImage})`,
+            backgroundSize: 'contain',
+            backgroundPosition: 'start',
+            backgroundRepeat: 'no-repeat',
+            marginBottom: 2,
+            display: 'flex',
+          }}
+        />
+        <Box sx={{ gap: '24px' }}>
+          <Box
+            sx={{
+              width: '100%',
+              height: '244px',
+              backgroundImage: `url(${IllustrationImage})`,
+              backgroundSize: 'contain',
+              backgroundPosition: 'start',
+              backgroundRepeat: 'no-repeat',
+              marginBottom: 2,
+              display: 'flex',
+            }}
+          />
+          <Box sx={{ gap: '48px' }}>
+            <Typography sx={{ fontSize: '20px', fontWeight: '800' }}>Welcome! Sign up to get started.</Typography>
+
+            <Box>
+              <TextField
+                variant="outlined"
+                placeholder="Enter Full Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                fullWidth
+                sx={{
+                  backgroundColor: "#E9E9E9",
+                  borderRadius: "8px",
+                  marginTop: '10px',
+                  '& fieldset': { border: 'none' },
+                }}
+              />
+
+              <TextField
+                variant="outlined"
+                placeholder="Email or phone number"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                fullWidth
+                sx={{
+                  backgroundColor: "#E9E9E9",
+                  borderRadius: "8px",
+                  marginTop: '10px',
+                  '& fieldset': { border: 'none' },
+                }}
+              />
+
+              <TextField
+                variant="outlined"
+                placeholder="Enter password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                fullWidth
+                sx={{
+                  backgroundColor: "#E9E9E9",
+                  borderRadius: "8px",
+                  marginTop: '10px',
+                  '& fieldset': { border: 'none' },
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={togglePasswordVisibility} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+              />
+
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 1 }}>
+                <FormControlLabel control={<Checkbox />} label="Remember me" />
+                <Link href="#" variant="body2">
+                  Forgot password?
+                </Link>
+              </Box>
+            </Box>
+
+            <Box sx={{ gap: '20px', display: 'flex', flexDirection: 'column' }}>
+              <PrimaryButton
+                sx={{ width: '100%' }}
+                onClick={handleSignUp}
+                disabled={isLoading}  // Disable the button when loading
+              >
+                {isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : "Sign Up"}
+              </PrimaryButton>
+              <SecondaryButton sx={{ backgroundColor: '#31CEB8', width: '100%', my: '30px' }}>
+                Sign Up With Google
+              </SecondaryButton>
+            </Box>
+
+            {error && <Typography color="error">{error}</Typography>}
+
+            <Box>
+              <Typography>
+                Already have an account?{" "}
+                <Link to="/login" component={RouterLink}>
+                  Login
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Container>
+  );
+};
+
+export default SignPage;
+
+
+--- src\Components\Buttons\Buttons.js ---
+import { styled } from '@mui/material/styles';
+import Button from '@mui/material/Button';
+
+export const PrimaryButton = styled(Button)(({ theme }) => ({
+  backgroundColor: '#021C33',
+  color: 'white',
+  borderRadius: 8,
+  padding: theme.spacing(1.5, 4),
+  height: 52,
+  width: 323,
+  textTransform: 'none',
+  '&:hover': {
+    backgroundColor: '#385D84',
+  },
+}));
+
+export const SecondaryButton = styled(Button)(({ theme }) => ({
+  backgroundColor: 'white',
+  color: '#021C33',
+  border: '1px solid #021C33',
+  borderRadius: 8,
+  padding: theme.spacing(1.5, 4),
+  height: 52,
+  width: 323,
+  textTransform: 'none',
+  '&:hover': {
+    backgroundColor: 'white',
+    border: '1px solid #021C33',
+    color:'#587898'
+
+  },
+}));
+
+
+export const TertiaryButton = styled(Button)(({ theme }) => ({
+  backgroundColor: '#063565',
+  color: 'white',
+  border: '1px solid #021C33',
+  borderRadius: 8,
+  padding: theme.spacing(1.5, 4),
+  height: 52,
+  width: 323,
+  textTransform: 'none',
+}));
+
+export const QuaternaryButton = styled(Button)(({ theme }) => ({
+  backgroundColor: '#385D84',
+  color: 'white',
+  border: '1px solid #021C33',
+  borderRadius: 8,
+  padding: theme.spacing(1.5, 4),
+  height: 52,
+  width: 323,
+  textTransform: 'none',
+}));
+
+export const PentaButton = styled(Button)(({ theme }) => ({
+  backgroundColor: 'white',
+  color: '#587898',
+  border: '1px solid #021C33',
+  borderRadius: 8,
+  padding: theme.spacing(1.5, 4),
+  height: 52,
+  width: 323,
+  textTransform: 'none',
+}));
+
+
+
+export const HexaButton = styled(Button)(({ theme }) => ({
+  backgroundColor: 'transparent',
+  color: '#063565',
+  border: '1px solid #063565',
+  borderRadius: 8,
+  padding: theme.spacing(1.5, 4),
+  height: 52,
+  width: 323,
+  textTransform: 'none',
+}));
+
+
+export const OctaButton = styled(Button)(({ theme }) => ({
+  backgroundColor: 'transparent',
+  color: '#587898',
+  border: '1px solid #587898',
+  borderRadius: 8,
+  padding: theme.spacing(1.5, 4),
+  height: 52,
+  width: 323,
+  textTransform: 'none',
+}));
+
+
+export const DecaButton = styled(Button)(({ theme }) => ({
+  backgroundColor: 'transparent',
+  color: '#042648',
+  border: '1px solid #042648',
+  borderRadius: 8,
+  padding: theme.spacing(1.5, 4),
+  height: 52,
+  width: 323,
+  textTransform: 'none',
+}));
+
+--- src\Components\Courses\Charts.js ---
+import * as React from 'react';
+import { BarChart } from '@mui/x-charts/BarChart';
+import { addLabels, balanceSheet } from './netflixsBalanceSheet';
+
+export default function StackBars() {
+  return (
+    <BarChart
+      dataset={balanceSheet}
+      series={addLabels([
+        { dataKey: 'currAss', stack: 'assets' },
+        { dataKey: 'nCurrAss', stack: 'assets' },
+        { dataKey: 'curLia', stack: 'liability' },
+        { dataKey: 'nCurLia', stack: 'liability' },
+        { dataKey: 'capStock', stack: 'equity' },
+        { dataKey: 'retEarn', stack: 'equity' },
+        { dataKey: 'treas', stack: 'equity' },
+      ])}
+      xAxis={[{ scaleType: 'band', dataKey: 'year' }]}
+      slotProps={{ legend: { hidden: true } }}
+      width={600}
+      height={350}
+    />
+  );
+}
+
+
+--- src\Components\Courses\Courses.js ---
+import React from 'react'
+import { Box, Typography, Paper, Button, Grid, Checkbox } from "@mui/material";
+import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons'
+import img from '../../Assets/neuron.jpg'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import StackBars from './Charts';
+import NavigationComponent from './CoursesItem';
+function Courses() {
+  return (
+    <>
+    <Box
+            sx={{
+              display: 'flex',
+              flexDirection:'column',
+              // border:'1px solid black',
+              gap: '16px',
+              padding:'16px',
+              borderRadius:5,
+              width:{xs:'100%', sm:'fit-content'},
+              backgroundColor:'white',
+              height:'fit-content',
+              overflowX:'hidden',
+              
+            }}
+          >
+            <Typography sx={{
+              fontSize:'36px',
+               fontWeight:'900',
+               lineHeight:'120%',
+            
+            }} >
+                       Course Title
+            </Typography>
+           
+
+       <Box sx={{
+        width:{xs:'fit-content', sm:'654px'},
+        mt:'-10px',
+    
+
+       }}>
+        <Typography sx={{
+          color:'#7F8184'
+        }}>
+            Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend.
+        </Typography>
+       </Box>
+
+       <Box>
+                 <Box>
+                    <StackBars/>
+                 </Box>
+
+                   <Typography variant='h2'  sx={{
+                    fontSize:'24px',
+                    fontWeight:900,
+                    mb:'8px'
+                   }}>
+                    Course Outline :
+                   </Typography>
+
+                   <NavigationComponent/>
+                </Box>
+
+        <Box sx={{ display: 'flex', gap: '8px',mt:'-70px', justifyContent: 'center',alignItems:'center', width: '100%' , flexDirection:'column'}}>
+                 <PrimaryButton variant="contained" sx={{fontSize:'16px' }} >Start Quiz</PrimaryButton>
+                 <SecondaryButton variant="contained" sx={{fontSize:'16px', color:'#063565'}}>View Previous Results</SecondaryButton>
+                 
+               </Box>
+
+
+             
+ </Box>
+                             </>
+  )
+}
+
+export default Courses
+
+
+
+--- src\Components\Courses\CoursesDemo.js ---
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
+import QuizIcon from '@mui/icons-material/Quiz';
+import BookmarksIcon from '@mui/icons-material/Bookmarks';
+import BookIcon from '@mui/icons-material/Book';
+
+export const navigationData = {
+  Navigation: {
+    'MDCAT ENGLISH': {
+      icon: BookIcon,
+    },
+    'MDCAT BIOLOGY': {
+      icon: PlayCircleIcon,
+    },
+    'MDCAT CHEMISTRY': {
+      icon: QuizIcon,
+    },
+    'MDCAT PHYSICS': {
+      icon: BookmarksIcon,
+    },
+  },
+};
+
+
+--- src\Components\Courses\CoursesItem.js ---
+import React from 'react';
+import { Box, Typography } from '@mui/material';
+import { navigationData } from './CoursesDemo'; // Ensure the correct path
+
+const FadedDivider = () => <div style={{ borderBottom: '1px solid #ddd', margin: '10px 10px' }} />; // Lighter divider color
+
+const NavigationComponent = () => {
+  return (
+    <Box
+      sx={{
+        maxHeight: 'calc(100vh - 100px)',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        pr: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        '&::-webkit-scrollbar': { width: '8px' },
+        '&::-webkit-scrollbar-thumb': { backgroundColor: '#aaa', borderRadius: '4px' },
+        '&::-webkit-scrollbar-track': { backgroundColor: '#f0f0f0' },
+        paddingBottom: '100px',
+        backgroundColor: '#ffffff', // White background for visibility
+      }}
+    >
+      {Object.entries(navigationData.Navigation).map(([sectionName, sectionData]) => (
+        <React.Fragment key={sectionName}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer',
+              gap: '8px',
+              px: '8px',
+              py: '6px',
+              '&:hover': { backgroundColor: '#f5f5f5' }, // Highlight on hover
+            }}
+          >
+            {/* Dynamically render the icon */}
+            {sectionData.icon &&
+              React.createElement(sectionData.icon, {
+                style: { fontSize: '20px', color: '#333' }, // Dark gray for icon
+              })}
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                fontSize: '16px',
+                cursor: 'pointer',
+                color: '#333', // Dark gray for text
+              }}
+            >
+              {sectionName}
+            </Typography>
+          </Box>
+          <FadedDivider />
+        </React.Fragment>
+      ))}
+    </Box>
+  );
+};
+
+export default NavigationComponent;
+
+
+--- src\Components\Courses\netflixsBalanceSheet.js ---
+export const balanceSheet = [
+    { year: '2020', currAss: 100, nCurrAss: 200, curLia: 150, nCurLia: 50, capStock: 50, retEarn: 80, treas: 20 },
+    { year: '2021', currAss: 120, nCurrAss: 210, curLia: 160, nCurLia: 60, capStock: 60, retEarn: 90, treas: 30 },
+    { year: '2022', currAss: 140, nCurrAss: 230, curLia: 170, nCurLia: 70, capStock: 70, retEarn: 100, treas: 40 },
+  ];
+  
+  export const addLabels = (series) => {
+    return series.map((s) => ({
+      ...s,
+      label: s.dataKey,
+    }));
+  };
+  
+
+--- src\Components\CoursesMain\CourseCacheContext.js ---
+// CourseCacheContext.js
+import React, { createContext, useState } from 'react';
+
+export const CourseCacheContext = createContext({});
+
+export const CourseCacheProvider = ({ children }) => {
+  const [courseCache, setCourseCache] = useState({});
+
+  const updateCourseCache = (courseId, data) => {
+    setCourseCache(prev => ({ ...prev, [courseId]: data }));
+  };
+
+  return (
+    <CourseCacheContext.Provider value={{ courseCache, updateCourseCache }}>
+      {children}
+    </CourseCacheContext.Provider>
+  );
+};
+
+
+--- src\Components\CoursesMain\CourseCard.js ---
+import React, { useCallback } from "react";
+import { Card, CardContent, CardMedia, Typography, Chip, Button, Box } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+
+function CourseCard({ course }) {
+  const navigate = useNavigate();
+
+  const handleClick = useCallback(() => {
+    // Navigate to /singlecourse with course id in location state.
+    navigate(`/singlecourse`, { state: { courseId: course.id } });
+  }, [navigate, course.id]);
+
+  return (
+    <Card
+      onClick={handleClick}
+      key={course.id}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        padding: "8px",
+        borderRadius: 3,
+        boxShadow: 6,
+        height: "fit-content",
+        width: "auto",
+        marginBottom: "16px",
+        cursor: "pointer",
+        transition: "transform 0.3s, box-shadow 0.3s",
+        "&:hover": {
+          transform: "scale(1.02)",
+          boxShadow: 8,
+        },
+      }}
+    >
+      {/* Course Image */}
+      <CardMedia
+        sx={{
+          height: "186px",
+          width: "100%",
+          backgroundColor: "#001F3F",
+          borderRadius: "8px",
+        }}
+      />
+
+      <CardContent
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          width: "100%",
+          gap: "35px",
+          padding: 0,
+          "&:last-child": {
+            paddingBottom: 0,
+          },
+        }}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          {/* Course Category */}
+          <Chip
+            label={course.category || "Unknown"}
+            sx={{
+              backgroundColor: "#E7F7FF",
+              color: "#0EAAFF",
+              height: "20px",
+            }}
+          />
+
+          {/* Course Name */}
+          <Typography sx={{ fontSize: "16px", fontWeight: "900" }}>
+            {course.name}
+          </Typography>
+
+          {/* Creator */}
+          <Typography variant="body2" sx={{ fontSize: "12px" }}>
+            Created by <strong>{course.created_by || "Unknown"}</strong>
+          </Typography>
+
+          {/* Price */}
+          <Typography variant="h6">Rs. {course.price || "N/A"}</Typography>
+        </Box>
+
+        {/* Course Stats */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <Button
+            variant="outlined"
+            sx={{
+              height: "22px",
+              fontSize: "8px",
+              borderRadius: "16px",
+              color: "black",
+            }}
+          >
+            Total Videos: {course.totalVideos || "0"}
+          </Button>
+          <Button
+            variant="outlined"
+            sx={{
+              height: "22px",
+              fontSize: "8px",
+              borderRadius: "16px",
+              color: "black",
+            }}
+          >
+            Total Notes: {course.totalNotes || "0"}
+          </Button>
+          <Button
+            variant="outlined"
+            sx={{
+              height: "22px",
+              fontSize: "8px",
+              borderRadius: "16px",
+              color: "black",
+            }}
+          >
+            Total Quizzes: {course.totalQuizzes || "0"}
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default React.memo(CourseCard);
+
+
+--- src\Components\CoursesMain\CourseDashboard.js ---
+import React from "react";
+import CourseCard from "./CourseCard";
+import { Box, Typography, Chip } from "@mui/material";
+import { useQuery } from "react-query";
+
+export default function CourseList() {
+  const fetchCourses = async () => {
+    const storedToken = localStorage.getItem("authToken");
+    if (!storedToken) {
+      throw new Error("No token found");
+    }
+    const response = await fetch("https://backend-lms-xpp7.onrender.com/api/courses/", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${storedToken}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch courses: ${response.statusText}`);
+    }
+    return response.json();
+  };
+
+  const { data: courses, error, isLoading } = useQuery("courses", fetchCourses, {
+    staleTime: 5 * 60 * 1000, // cache courses for 5 minutes
+  });
+
+  if (isLoading) return <Typography>Loading courses...</Typography>;
+  if (error) return <Typography>Error: {error.message}</Typography>;
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        padding: "16px",
+        backgroundColor: "white",
+        borderRadius: 3,
+        boxShadow: 3,
+        width: "100%",
+      }}
+    >
+      {/* Header Section */}
+      <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+        THE MDCAT WORLD
+      </Typography>
+      <Typography variant="body1" sx={{ color: "gray" }}>
+        When you land on a sample
+      </Typography>
+
+      <Chip
+        label="Course Title"
+        sx={{
+          backgroundColor: "#E7F7FF",
+          color: "#0EAAFF",
+          height: "25px",
+          width: "100px",
+        }}
+      />
+
+      <Typography variant="h5" sx={{ fontWeight: "bold", my: "4px" }}>
+        Batch:
+      </Typography>
+
+      {/* Grid for Course Cards */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr", // Single column on small screens
+            sm: "repeat(2, 1fr)",
+          },
+          gap: "16px",
+        }}
+      >
+        {courses.map((course) => (
+          <CourseCard key={course.id} course={course} />
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+
+--- src\Components\Dashboard\Dashboard.js ---
+import React from "react";
+import { Box, Typography, Stack, styled, Skeleton } from "@mui/material";
+import { useNavigate, useLocation } from "react-router-dom";
+import { PrimaryButton, SecondaryButton } from "../Buttons/Buttons";
+import { dashboardData } from "./DemoMain"; // For icons and static text
+import "./Main.css";
+import { useQuery } from "react-query";
+
+const StatCard = styled(Box)(({ theme }) => ({
+  backgroundColor: "#EAFAF8",
+  borderRadius: "8px",
+  padding: "8px",
+  height: "40px",
+  display: "flex",
+  flexDirection: "row",
+  justifyContent: "space-between",
+  border: "1px solid #E9E9E9",
+  gap: "8px",
+  boxSizing: "border-box",
+}));
+
+// Skeleton placeholder that mimics the final ScholarshipCard layout.
+const ScholarshipCardSkeleton = () => {
+  return (
+    <Box
+      sx={{
+        maxWidth: { sm: "686px", xs: "100%" },
+        width: "100%",
+        minWidth:'300px',
+        mx: "auto",
+        p: "16px",
+        backgroundColor: "white",
+        borderRadius: "12px",
+        boxShadow: 5,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        overflowX: "hidden",
+        height: { xs: "90vh", sm: "auto" },
+      }}
+    >
+      {/* Content Section Skeleton */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: { xs: "48px", sm: "16px" },
+          flex: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {/* Header skeletons */}
+          <Box sx={{ gap: "8px" }}>
+            <Skeleton variant="text" width="30%" height={20} />
+            <Skeleton variant="text" width="80%" height={40} />
+          </Box>
+          {/* Description skeleton */}
+          <Skeleton variant="rectangular" width="100%" height={72} />
+        </Box>
+
+        {/* Dynamic Stats Section Skeleton */}
+        <Box sx={{ height: "184px", gap: "8px", flex: 1, mt: { xs: "50px", sm: "0px" } }}>
+          <Stack spacing={1}>
+            {[...Array(4)].map((_, index) => (
+              <Skeleton key={index} variant="rectangular" width="100%" height={40} />
+            ))}
+          </Stack>
+        </Box>
+      </Box>
+
+      {/* Action Buttons Skeleton */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: "16px",
+          justifyContent: "center",
+          mt: "32px",
+        }}
+      >
+        <Skeleton variant="rectangular" width="95%" height={40} />
+        <Skeleton variant="rectangular" width="95%" height={40} />
+      </Box>
+    </Box>
+  );
+};
+
+export default function ScholarshipCard() {
+  const { Dashboard } = dashboardData;
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { quizId } = location.state || {};
+
+  // Define the query function for fetching quiz data.
+  const fetchQuizData = async () => {
+    if (!quizId) {
+      throw new Error("No quizId provided.");
+    }
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) {
+      throw new Error("No auth token found.");
+    }
+    const response = await fetch(`https://backend-lms-xpp7.onrender.com/api/quizzes/?id=${quizId}`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data && data.length > 0 ? data[0] : null;
+  };
+
+  // Use React Query's useQuery hook to fetch quiz data.
+  const { data: quizData, isLoading, error } = useQuery(["quizData", quizId], fetchQuizData);
+
+  // Build the stats array with dynamic and static values.
+  const stats = [
+    {
+      icon: Dashboard.Questions.icon,
+      label: "Total Questions",
+      value: quizData ? quizData.questions_ids.length : 0,
+    },
+    {
+      icon: Dashboard.PassRate.icon,
+      label: "Pass Rate",
+      value: Dashboard.PassRate.Text,
+    },
+    {
+      icon: Dashboard.Duration.icon,
+      label: "Time Duration (mins)",
+      value: quizData ? quizData.time_duration : 0,
+    },
+    {
+      icon: Dashboard.Score.icon,
+      label: "Score",
+      value: Dashboard.Score.Text,
+    },
+  ];
+
+  // Handler for "View Previous Result"
+  const handleViewPreviousResult = () => {
+    const storedAttempt = localStorage.getItem("latestQuizAttempt");
+    if (storedAttempt) {
+      const latestQuizAttempt = JSON.parse(storedAttempt);
+      navigate("/questions", { state: { latestQuizAttempt } });
+    } else {
+      console.error("No previous quiz result found.");
+    }
+  };
+
+  // Show the skeleton while loading.
+  if (isLoading) {
+    return <ScholarshipCardSkeleton />;
+  }
+
+  if (error || !quizData) {
+    return (
+      <Box
+        sx={{
+          maxWidth: { sm: "686px", xs: "100%" },
+          width: "100%",
+          mx: "auto",
+          p: "16px",
+          backgroundColor: "white",
+          borderRadius: "12px",
+          boxShadow: 5,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: { xs: "90vh", sm: "auto" },
+        }}
+      >
+        <Typography variant="body1" color="text.secondary">
+          Error loading quiz data.
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        maxWidth: { sm: "686px", xs: "100%" },
+        width: "100%",
+        mx: "auto",
+        p: "16px",
+        backgroundColor: "white",
+        borderRadius: "12px",
+        boxShadow: 5,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        overflowX: "hidden",
+        height: { xs: "90vh", sm: "auto" },
+      }}
+    >
+      {/* Content Section */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: { xs: "48px", sm: "16px" },
+          flex: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {/* Header */}
+          <Box sx={{ gap: "8px" }}>
+            <Typography sx={{ fontWeight: 900, color: "black", fontSize: "12px" }}>
+              MODULE 1 &gt; CHAPTER
+            </Typography>
+            <Typography
+              gutterBottom
+              sx={{ fontWeight: 700, color: "#03162A", fontSize: "32px", lineHeight: "120%" }}
+            >
+              {quizData.title}
+            </Typography>
+          </Box>
+
+          {/* Description */}
+          {quizData ? (
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ height: "72px", gap: "8px", width: "fit-content" }}
+              paragraph
+            >
+              {quizData.description}
+            </Typography>
+          ) : (
+            <Typography variant="body1" color="text.secondary">
+              Loading description...
+            </Typography>
+          )}
+        </Box>
+
+        {/* Dynamic Stats Section */}
+        <Box sx={{ height: "184px", gap: "8px", flex: 1, mt: { xs: "50px", sm: "0px" } }}>
+          <Stack spacing={1}>
+            {stats.map(({ icon: Icon, label, value }, index) => (
+              <StatCard key={index}>
+                <Icon sx={{ color: "#000000", height: "20px", width: "20px" }} />
+                <Typography variant="body1" sx={{ fontSize: "16px", lineHeight: "150%" }} color="#212B36" fontWeight={400}>
+                  {value}
+                </Typography>
+                <Typography variant="body1" sx={{ fontSize: "16px", ml: "auto", color: "#7F8184", fontWeight: 400, lineHeight: "150%" }}>
+                  {label}
+                </Typography>
+              </StatCard>
+            ))}
+          </Stack>
+        </Box>
+      </Box>
+
+      {/* Action Buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: "16px",
+          justifyContent: "center",
+          mt: "32px",
+        }}
+      >
+        <PrimaryButton
+          sx={{ width: "95%" }}
+          variant="contained"
+          onClick={() => {
+            localStorage.removeItem("latestQuizAttempt");
+            navigate("/Questions", { state: { quizId } });
+          }}
+        >
+          Start Quiz
+        </PrimaryButton>
+
+        <SecondaryButton
+          sx={{ width: "95%" }}
+          variant="contained"
+          onClick={handleViewPreviousResult}
+        >
+          View Previous Result
+        </SecondaryButton>
+      </Box>
+    </Box>
+  );
+}
+
+
+--- src\Components\Dashboard\DemoMain.js ---
+import {
+    CheckCircle,
+    AccessTimeFilled,
+    Star,
+  } from '@mui/icons-material';
+  import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
+
+
+
+export const dashboardData = {
+    Dashboard: {
+         
+            Questions: {
+                 Text: '24',
+                icon: QuestionAnswerIcon
+            },
+            PassRate: {
+                Text: '60%',
+                icon: CheckCircle
+            },
+            Duration: {
+                Text: '15min',
+                icon: AccessTimeFilled
+            },
+             Score: {
+                Text: '10/24',
+                icon: Star
+            }
+        },
+        
+    }
+
+
+--- src\Components\Dashboard\Main.css ---
+*{
+    fontFamily: "'Roboto', sans-serif",
+}
+
+--- src\Components\Header\Header.js ---
+import React from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Box,
+  InputBase,
+  IconButton,
+  Button,
+  styled,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+
+const StyledHeader = styled(AppBar)(({ theme }) => ({
+  backgroundColor: '#ffffff',
+  height: 'auto',
+  color: '#000',
+  boxShadow: 'none',
+  zIndex: 1,
+}));
+
+const CollectButton = styled(Button)(({ theme }) => ({
+  borderRadius: '30px',
+  height: '33px',
+  backgroundColor: '#03162A',
+  color: '#ffffff',
+  '&:hover': {
+    backgroundColor: '#333',
+  },
+}));
+
+const ProfileIcon = styled(AccountCircleIcon)(({ theme }) => ({
+  fontSize: '2rem',
+  color: '#000',
+}));
+
+function Header() {
+  const theme = useTheme();
+  const isMobileView = useMediaQuery(theme.breakpoints.down(1145)); // Adjust breakpoint for 1145px
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down(722)); // Adjust breakpoint for 722px
+
+  return (
+    <StyledHeader position="sticky">
+      <Toolbar>
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          sx={{
+            flexGrow: 1,
+            ml: '20px',
+            fontSize: isSmallScreen ? '20px' : '30px', // Adjust font size conditionally
+          }}
+        >
+          Course Dashboard
+        </Typography>
+        <Box display="flex" alignItems="center">
+          {!isMobileView && (
+            <Box
+              display="flex"
+              alignItems="center"
+              sx={{
+                bgcolor: 'white',
+                p: 1,
+                mb: 1,
+                height: '15px',
+                width: '239px',
+                borderRadius: 5,
+              }}
+            >
+              <InputBase placeholder="Search…" sx={{ ml: 1, flex: 1 }} />
+              <SearchIcon />
+            </Box>
+          )}
+          {isMobileView ? (
+            <IconButton sx={{ color: '#000' }}>
+              <SearchIcon />
+              <EmojiEventsIcon sx={{color:'gold', ml: 1}}/>
+            </IconButton>
+          ) : (
+            <CollectButton
+              variant="contained"
+              startIcon={<EmojiEventsIcon sx={{ color: 'gold' }} />}
+              sx={{ ml: 2, mr: 1.5, mb: 0.7 }}
+            >
+              Collect Rewards
+            </CollectButton>
+          )}
+          <IconButton sx={{ color: '#000' }}>
+            <NotificationsIcon />
+          </IconButton>
+          <IconButton sx={{ color: '#000' }}>
+            <ProfileIcon sx={{ fontSize: '2.7rem' }} />
+          </IconButton>
+        </Box>
+      </Toolbar>
+    </StyledHeader>
+  );
+}
+
+export default Header;
+
+
+--- src\Components\Main.js ---
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Login from "../Components/Authorization/Login";
+import App from "../App";
+import SignPage from "../Components/Authorization/SignIn";
+
+const Main = () => {
+  const [authStage, setAuthStage] = useState("signup"); // "signup", "login", or "desk"
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const authToken = localStorage.getItem("authToken");
+
+    if (authToken) {
+      setAuthStage("desk");
+    } else {
+      setAuthStage("signup");
+    }
+  }, []);
+
+  const handleSignUpSuccess = () => {
+    // After successful sign-up, move to login
+    setAuthStage("login");
+    navigate("/login", { replace: true });
+  };
+
+  const handleLoginSuccess = (token) => {
+    if (!token) {
+      console.error("No token received in handleLoginSuccess");
+      return;
+    }
+
+    localStorage.setItem("authToken", token);
+    setAuthStage("desk");
+    navigate("/courses", { replace: true });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    setAuthStage("login");
+    navigate("/login", { replace: true });
+  };
+
+  if (authStage === "signup") {
+    return <SignPage onSignUpSuccess={handleSignUpSuccess} />;
+  } else if (authStage === "login") {
+    return <Login onLogin={handleLoginSuccess} />;
+  } else {
+    return <App onLogout={handleLogout} />;
+  }
+};
+
+export default Main;
+
+
+--- src\Components\MobileNav\Nav.js ---
+import React, { useState } from 'react';
+import { Box, IconButton, Divider, Typography } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { RiMenuUnfold3Fill, RiMenuFold3Fill } from 'react-icons/ri';
+import SearchIcon from '@mui/icons-material/Search';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+// Import your navigation data and SidebarItems as needed
+// import SidebarItems from '.,/sidebar/SidebarItems';
+import { navigationData } from '../Sidebar/Demo'; // Make sure this file exists and exports your navigation data
+import SidebarItems from '../Sidebar/SidebarItems';
+
+// Sidebar container styled to cover the viewport when open
+const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  height: '100vh',
+  width: sidebarOpen ? '100vw' : '0px', // full width when open, 0 when closed
+  backgroundColor: '#03162A',
+  color: '#ffffff',
+  overflowX: 'hidden',
+  transition: 'width 0.3s ease',
+  zIndex: 1200,
+}));
+
+// Sidebar toggle button always accessible
+const SidebarToggle = styled(IconButton)(({ theme  }) => ({
+  position: 'absolute',
+  top: '20px',
+  left:  '85%',
+  backgroundColor: '#ffffff',
+  color: '#000',
+  borderRadius: '20%',
+  width: '35px',
+  height: '35px',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+  zIndex: 1300,
+  fontSize: '1.6rem',
+  transition: 'transform 0.3s ease',
+  '&:hover': {
+    backgroundColor: '#f0f0f0',
+    transform: 'scale(1.1)',
+  },
+}));
+
+// A few more styled components for content and items
+const SidebarItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(1),
+  cursor: 'pointer',
+  transition: 'transform 0.3s ease, background-color 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    backgroundColor: '#002b47',
+  },
+}));
+
+const SidebarIcon = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  width: '24px',
+  height: '24px',
+  marginRight: theme.spacing(1),
+}));
+
+const FooterSection = styled(Box)(({ theme }) => ({
+  marginTop: 'auto',
+  display: 'flex',
+  flexDirection: 'column',
+  paddingBottom: theme.spacing(1),
+  backgroundColor: '#03162A',
+}));
+
+// The Sidebar component
+function Sidebar({ sidebarOpen, toggleSidebar, onLogout }) {
+  return (
+    <SidebarContainer sidebarOpen={sidebarOpen}>
+   {/* // In your Sidebar component, uncomment the SidebarToggle usage: */}
+<SidebarToggle onClick={toggleSidebar}>
+  {sidebarOpen ? <RiMenuFold3Fill /> : <RiMenuUnfold3Fill />}
+</SidebarToggle>
+
+      {sidebarOpen && (
+        <Box sx={{
+          //  mt: 6,
+         p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          {/* Top Section: Logo */}
+          <Box sx={{ mb: 2 }}>
+            <img
+              src="/insighticon.png"
+              alt="Insight Icon"
+              style={{ width: '150px', height: 'auto' }}
+            />
+          </Box>
+          <Divider sx={{ background: '#ffffff', mb: 2 }} />
+          
+         <SidebarItems/>
+          
+          {/* Footer Section */}
+          <FooterSection>
+            <Divider sx={{ background: '#ffffff', mb: 2 }} />
+            <SidebarItem onClick={onLogout}>
+              <SidebarIcon>
+                <ExitToAppIcon />
+              </SidebarIcon  >
+              <Typography variant="body1">Logout</Typography>
+            </SidebarItem>
+            <SidebarItem>
+              <SidebarIcon>
+                <SettingsIcon />
+              </SidebarIcon>
+              <Typography variant="body1">Settings</Typography>
+            </SidebarItem>
+          </FooterSection>
+        </Box>
+      )}
+    </SidebarContainer>
+  );
+}
+
+// The Nav component with the top navigation bar
+export default function Nav() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => !prev);
+  };
+
+  const handleLogout = () => {
+    // Clear tokens from localStorage/sessionStorage
+    localStorage.removeItem('authToken');
+    // // Optionally, update your authentication context or state
+    // setUser(null);
+    // Redirect to login page
+    window.location.href = '/login';
+  };
+
+  return (
+    <>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          zIndex: 222,
+          width: '100%',
+          padding: '16px',
+          backgroundColor: '#03162A', // Adjust background as needed
+        }}
+      >
+        {/* Left Section */}
+        <Box sx={{ display: 'flex', gap: '8px', flexDirection:'row',
+           alignItems: 'center' ,
+           justifyContent:'center' }}>
+          <IconButton onClick={toggleSidebar} sx={{ color: 'white'  }}>
+          { sidebarOpen ? <RiMenuFold3Fill /> : <RiMenuUnfold3Fill />}
+          </IconButton>
+          <Box>
+            <img
+              src="/insighticon.png"
+              alt="Insight Icon"
+              style={{ width: '92px', height: '32px' }}
+            />
+          </Box>
+        </Box>
+
+        {/* Right Section */}
+        <Box
+          sx={{
+            color: 'white',
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '16px',
+            alignItems: 'center',
+            height: '30px',
+          }}
+        >
+          <SearchIcon sx={{ fontSize: '20px' }} />
+          <NotificationsIcon sx={{ fontSize: '20px' }} />
+          <AccountCircleIcon sx={{ fontSize: '25px' }} />
+        </Box>
+      </Box>
+      
+      {/* Render the Sidebar */}
+      <Sidebar sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} onLogout={handleLogout} />
+    </>
+  );
+}
+
+
+--- src\Components\Notes\Notes.js ---
+import React from 'react'
+import { Box, Typography, Paper, Button, Grid, Checkbox } from "@mui/material";
+import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons'
+import img from '../../Assets/neuron.jpg'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import AudioPlayer from './VoiceNote';
+function Notespage() {
+  return (
+    <>
+    <Box
+            sx={{
+              display: 'flex',
+              flexDirection:'column',
+              // border:'1px solid black',
+              gap: '16px',
+              padding:'16px',
+              borderRadius:5,
+              width:{xs:'100%', sm:'fit-content'},
+              backgroundColor:'white',
+              height:'fit-content',
+              overflowX:'hidden',
+              boxShadow:10,
+
+              
+            }}
+          >
+            
+           <AudioPlayer/>
+
+           <Typography sx={{
+              fontSize:'36px',
+               fontWeight:'900',
+               lineHeight:'120%',
+            
+            }} >
+                       Heading 1 
+            </Typography>
+
+       <Box sx={{
+        width:{xs:'fit-content', sm:'654px'},
+    
+       
+
+       }}>
+        <Typography sx={{
+          color:'#7F8184'
+        }}>
+            Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend.
+            Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend.
+         </Typography>
+       </Box>
+
+        <Box sx={{ display: 'flex', gap: '8px', justifyContent: 'center', width: '100%'}}>
+                 <SecondaryButton variant="contained" >Back</SecondaryButton>
+                 <PrimaryButton variant="contained" >Next</PrimaryButton>
+               </Box>
+                             </Box>
+                             </>
+  )
+}
+
+export default Notespage
+
+
+--- src\Components\Notes\VoiceNote.css ---
+.voice-note-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #f1f3f4;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .play-pause-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #0078d4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .waveform {
+    flex: 1;
+    height: 60px; /* Adjust height as needed */
+  }
+  
+  .timer {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  
+
+  
+
+--- src\Components\Notes\VoiceNote.js ---
+import React, { useState, useRef, useEffect } from 'react';
+import { Box, Typography, Paper, Button, Grid, Checkbox } from "@mui/material";
+import { IconButton, Slider, Menu, MenuItem } from '@mui/material';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import SpeedIcon from '@mui/icons-material/Speed';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import StopIcon from '@mui/icons-material/StopCircle';
+
+// Helper function to format seconds into minutes:seconds format
+const formatTime = (timeInSeconds) => {
+  const minutes = Math.floor(timeInSeconds / 60);
+  const seconds = Math.floor(timeInSeconds % 60);
+  return `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
+};
+
+function AudioPlayer() {
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [speed, setSpeed] = useState(1);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  // This function is triggered when the audio is playing or time is updated
+  const handleTimeUpdate = () => {
+    setCurrentTime(audioRef.current.currentTime);
+  };
+
+  // Set the audio's duration when the metadata is loaded
+  const handleDurationLoaded = () => {
+    setDuration(audioRef.current.duration);
+  };
+
+  // Play or pause the audio
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  // Handle slider change (to manually adjust the time)
+  const handleSliderChange = (event, newValue) => {
+    audioRef.current.currentTime = newValue;
+    setCurrentTime(newValue);
+  };
+
+  // Handle playback speed changes
+  const handleSpeedChange = (event) => {
+    setSpeed(event.target.value);
+    audioRef.current.playbackRate = event.target.value;
+    setAnchorEl(null);
+  };
+
+  // Open the speed menu
+  const handleSpeedMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // Close the speed menu
+  const handleCloseSpeedMenu = () => {
+    setAnchorEl(null);
+  };
+
+  useEffect(() => {
+    // Update currentTime while playing
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setCurrentTime(audioRef.current.currentTime);
+      }, 1000);
+      return () => clearInterval(interval); // Cleanup interval when not playing
+    }
+  }, [isPlaying]);
+
+  return (
+    <Box sx={{
+     width:{sm:'653px', xs:'100%' },
+     height:'fit-content',
+     boxSizing:'border-box',
+     backgroundColor : '#03162A',
+     display:'flex',
+     padding:'16px',
+     flexDirection:'row',
+     justifyContent:'flex-start',
+     borderRadius:'16px',
+     boxShadow:15
+        }}>
+    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+      <IconButton onClick={handlePlayPause}>
+        {isPlaying ? <StopIcon  sx={{
+          width:{sm:'90px', xs:'45px'} , height:{sm:'90px', xs:'45px'} , color:'white'
+        }} /> : <PlayCircleOutlineIcon sx={{
+           width:{sm:'90px', xs:'45px'} , height:{sm:'90px', xs:'45px'} , color:'white'
+        }} />}
+      </IconButton>
+
+      <Box sx={{
+        width:'100%',
+        display:'flex',
+        flexDirection:'row',
+        justifyContent:'center',
+        alignItems:'center',
+        gap:'16px',
+        color:'white'
+
+
+      }}>
+      
+      {/* Show formatted current time / total time */}
+      <Typography variant="body2" sx={{
+      }} >
+        {formatTime(currentTime)} / {formatTime(duration)}
+      </Typography>
+      {/* Progress bar */}
+      <Slider
+        value={currentTime}
+        min={0}
+        max={duration}
+        onChange={handleSliderChange}
+        onMouseUp={handleTimeUpdate}
+        style={{ flex: 1 , color:'white'
+        }}
+      />
+   
+
+      {/* Speed menu */}
+      <IconButton  sx={{
+        color:'white'
+      }} onClick={handleSpeedMenuClick}>
+        <SpeedIcon />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseSpeedMenu}
+      >
+        <MenuItem onClick={() => handleSpeedChange({ target: { value: 0.5 } })}>0.5x</MenuItem>
+        <MenuItem onClick={() => handleSpeedChange({ target: { value: 1 } })}>1x</MenuItem>
+        <MenuItem onClick={() => handleSpeedChange({ target: { value: 1.5 } })}>1.5x</MenuItem>
+        <MenuItem onClick={() => handleSpeedChange({ target: { value: 2 } })}>2x</MenuItem>
+      </Menu>
+      </Box>
+
+      {/* Audio element */}
+      <audio
+        ref={audioRef}
+        src={`${process.env.PUBLIC_URL}/Audio.mp3`} // Reference the audio in the public folder
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleDurationLoaded}
+      />
+    </div>
+    </Box>
+  );
+}
+
+export default AudioPlayer;
+
+
+--- src\Components\ProtectedRoutes\ProtectedRoutes.js ---
+import { Navigate } from "react-router-dom";
+
+const ProtectedRoute = ({ element }) => {
+  const authToken = localStorage.getItem("authToken"); // Get token
+
+  return authToken ? element : <Navigate to="/login" />;
+};
+
+export default ProtectedRoute;
+
+
+--- src\Components\Quiz\Quiz.js ---
+import React, { useState, useEffect } from "react";
+import QuizHeader from "./QuizHeader";
+import QuizHeader2 from "./QuizHeader2";
+import QuizAttempts from "./QuizHeaderSolved";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "react-query";
+
+const TopQuestions = () => {
+  const { state } = useLocation();
+  const quizId = state?.quizId || 3;
+  const navigate = useNavigate();
+
+  // Local component state
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedResponses, setSelectedResponses] = useState([]);
+  const [latestQuizAttempt, setLatestQuizAttempt] = useState(null);
+  const [quizFinished, setQuizFinished] = useState(false);
+  const [showSubmitAlert, setShowSubmitAlert] = useState(false);
+  // This loading state is used when quiz is finished, to simulate a delay before showing QuizAttempts
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load persisted quiz attempt on mount
+  useEffect(() => {
+    const storedQuizAttempt = localStorage.getItem("latestQuizAttempt");
+    if (storedQuizAttempt) {
+      setLatestQuizAttempt(JSON.parse(storedQuizAttempt));
+      setQuizFinished(true);
+    }
+  }, []);
+
+  // Define a query function that fetches the quiz, questions, and options concurrently.
+  const fetchQuizQuestions = async () => {
+    const storedToken = localStorage.getItem("authToken");
+    if (!storedToken) {
+      throw new Error("No token found");
+    }
+    // Fetch Quiz Data using quizId
+    const quizResponse = await fetch(
+      `https://backend-lms-xpp7.onrender.com/api/quizzes/?id=${quizId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (!quizResponse.ok) {
+      throw new Error("Failed to fetch quiz data");
+    }
+    const quizData = await quizResponse.json();
+    if (!quizData.length) {
+      throw new Error("Quiz with ID 3 not found");
+    }
+    const quiz = quizData[0];
+    const questionIDs = quiz.questions_ids;
+
+    // Fetch Questions and Options concurrently
+    const [questionsResponse, optionsResponse] = await Promise.all([
+      fetch("https://backend-lms-xpp7.onrender.com/api/questions/", {
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+          "Content-Type": "application/json",
+        },
+      }),
+      fetch("https://backend-lms-xpp7.onrender.com/api/options/", {
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+          "Content-Type": "application/json",
+        },
+      }),
+    ]);
+    if (!questionsResponse.ok) {
+      throw new Error("Failed to fetch questions");
+    }
+    if (!optionsResponse.ok) {
+      throw new Error("Failed to fetch options");
+    }
+    const questionsData = await questionsResponse.json();
+    const optionsData = await optionsResponse.json();
+
+    // Filter questions based on the quiz's questionIDs
+    const filteredQuestions = questionsData.filter((question) =>
+      questionIDs.includes(question.id)
+    );
+
+    // Map each filtered question with its corresponding options
+    const formattedQuestions = filteredQuestions.map((question) => {
+      const matchedOptions = optionsData.filter(
+        (option) => option.question_id === question.id
+      );
+      return { ...question, options: matchedOptions, quiz_id: quiz.id };
+    });
+    return formattedQuestions;
+  };
+
+  // Use React Query to fetch the quiz questions.
+  // The query is enabled only if the quiz is not finished.
+  const {
+    data: questions,
+    isLoading: isQuestionsLoading,
+    error,
+  } = useQuery(["quizQuestions", quizId], fetchQuizQuestions, {
+    enabled: !quizFinished,
+  });
+
+  // Handler for option selection.
+  const handleOptionSelect = (option) => {
+    setSelectedResponses((prevResponses) => {
+      const updatedResponses = [...prevResponses];
+      const existingIndex = updatedResponses.findIndex(
+        (res) => res.question === questions[currentQuestionIndex].id
+      );
+      if (existingIndex !== -1) {
+        updatedResponses[existingIndex] = {
+          ...updatedResponses[existingIndex],
+          selected_option: option.id,
+          is_correct: option.is_correct || false,
+        };
+      } else {
+        updatedResponses.push({
+          question: questions[currentQuestionIndex].id,
+          selected_option: option.id,
+          is_correct: option.is_correct || false,
+          visibility: true,
+          reviewed: true,
+          created_by: Number(localStorage.getItem("userId")),
+          updated_by: Number(localStorage.getItem("userId")),
+        });
+      }
+      return updatedResponses;
+    });
+  };
+
+  const handleNext = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    } else {
+      handleFinishQuiz();
+    }
+  };
+
+  // Handler to finish the quiz and submit responses.
+  const handleFinishQuiz = async () => {
+    setShowSubmitAlert(false);
+    const userId = localStorage.getItem("userId");
+    if (!userId || selectedResponses.length === 0) {
+      console.error("User ID not found or no responses available.");
+      return;
+    }
+    const payload = {
+      quiz: questions.length > 0 ? questions[0].quiz_id : 3,
+      taken_time: new Date().toISOString(),
+      responses: selectedResponses,
+    };
+    try {
+      const token = localStorage.getItem("authToken");
+      // Submit quiz responses
+      const response = await fetch(
+        "https://backend-lms-xpp7.onrender.com/api/submit-quiz/",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to submit quiz responses");
+      }
+      // Fetch quiz attempt data
+      const quizAttemptsResponse = await fetch(
+        `https://backend-lms-xpp7.onrender.com/api/quiz-attempts/?student=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!quizAttemptsResponse.ok) {
+        throw new Error("Failed to fetch quiz attempts");
+      }
+      const quizAttemptsData = await quizAttemptsResponse.json();
+      if (!quizAttemptsData.length) {
+        console.log("No quiz attempts found.");
+        return;
+      }
+      // Get the most recent quiz attempt and store it.
+      const latestAttempt = quizAttemptsData.sort(
+        (a, b) => new Date(b.attempt_time) - new Date(a.attempt_time)
+      )[0];
+      localStorage.setItem("latestQuizAttempt", JSON.stringify(latestAttempt));
+      setLatestQuizAttempt(latestAttempt);
+      setQuizFinished(true);
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentQuestionIndex(
+      (prev) => (prev - 1 + questions.length) % questions.length
+    );
+  };
+
+  const handleQuestionClick = (index) => {
+    setCurrentQuestionIndex(index);
+  };
+
+  // When quiz is finished, simulate a delay before showing the QuizAttempts component.
+  useEffect(() => {
+    if (quizFinished) {
+      setIsLoading(true);
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [quizFinished]);
+
+  // Render loading/error messages or the quiz interface.
+  if (isQuestionsLoading) return <p>Loading questions...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+  if ((!questions || !questions.length) && !quizFinished)
+    return <p>No questions available.</p>;
+
+  if (quizFinished) {
+    if (isLoading) {
+      return <div>Loading...</div>;
+    }
+    return <QuizAttempts latestQuizAttempt={latestQuizAttempt} />;
+  }
+
+  const currentQuestion = questions[currentQuestionIndex] || {};
+  const options = Array.isArray(currentQuestion.options)
+    ? currentQuestion.options
+    : [];
+
+  const areOptionsImages = options.some(
+    (option) =>
+      typeof option === "string" &&
+      (option.includes(".jpg") || option.includes(".png"))
+  );
+
+  return areOptionsImages ? (
+    <QuizHeader2
+      questions={questions}
+      currentQuestionIndex={currentQuestionIndex}
+      onNext={handleNext}
+      onBack={handleBack}
+      onQuestionClick={handleQuestionClick}
+    />
+  ) : (
+    <QuizHeader
+      questions={questions}
+      currentQuestionIndex={currentQuestionIndex}
+      onNext={handleNext}
+      onBack={handleBack}
+      onQuestionClick={handleQuestionClick}
+      onOptionSelect={handleOptionSelect}
+      latestQuizAttempt={latestQuizAttempt}
+    />
+  );
+};
+
+export default TopQuestions;
+
+
+--- src\Components\Quiz\QuizHeader.js ---
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Grid,
+  Checkbox,
+  CircularProgress
+} from "@mui/material";
+import TourIcon from "@mui/icons-material/Tour";
+import GradeSharpIcon from "@mui/icons-material/GradeSharp";
+import Switch from "@mui/material/Switch";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import { PrimaryButton, SecondaryButton } from "../Buttons/Buttons";
+
+function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestionClick, onOptionSelect }) {
+  const [solvedQuestions, setSolvedQuestions] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(900);
+  const [svgWidth, setSvgWidth] = useState(0);
+  const [checkedStates, setCheckedStates] = useState({});
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const boxRefs = useRef([]);
+  const containerRef = useRef();
+
+  const handleCheckboxChange = (optionIndex, optionValue) => {
+    const updatedCheckedStates = {};
+    // Mark only the selected option as checked
+    updatedCheckedStates[`${currentQuestionIndex}-${optionIndex}`] = true;
+    setCheckedStates(updatedCheckedStates);
+    console.log(optionValue);
+    onOptionSelect(optionValue);
+  };
+  
+  const handleNext = async () => {
+    // Check if the current question has an answer
+    const isAnswered = Object.keys(checkedStates).some(key => 
+      key.startsWith(`${currentQuestionIndex}-`)
+    );
+  
+    if (isAnswered && !solvedQuestions.includes(currentQuestionIndex)) {
+      setSolvedQuestions([...solvedQuestions, currentQuestionIndex]);
+    }
+  
+    // If this is the last question, simulate submission with a loader
+    if (currentQuestionIndex === questions.length - 1) {
+      setIsSubmitting(true);
+      // Assume onNext returns a promise when submitting
+      await onNext();
+      setIsSubmitting(false);
+    } else {
+      onNext(); // Move to the next question or submit on the last question
+    }
+  };
+
+  const handleReviewToggle = () => {
+    setIsReviewMode((prev) => !prev);
+  };
+
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [timeLeft]);
+
+  // Compute the full scrollable width of the button container
+  useEffect(() => {
+    if (containerRef.current) {
+      setSvgWidth(containerRef.current.scrollWidth);
+    }
+  }, [questions]);
+
+  const getBoxCenter = (index) => {
+    if (boxRefs.current[index] && containerRef.current) {
+      const box = boxRefs.current[index].getBoundingClientRect();
+      const container = containerRef.current.getBoundingClientRect();
+      return {
+        x: box.left - container.left + box.width / 2,
+        y: box.top - container.top + box.height / 2,
+      };
+    }
+    return { x: 0, y: 0 };
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  const handleBoxClick = (index) => {
+    onQuestionClick(index);
+  };
+
+  return (
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '16px',
+      width: '100%',
+      padding: { xs: '0px', sm: '16px' }
+    }}>
+      <Box sx={{
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: "686px",
+        width: { xs: "100%", sm: "calc(100%)" },
+        backgroundColor: "white",
+        zIndex: 1,
+        padding: '16px',
+        boxSizing: 'border-box',
+        gap: '16px',
+        position: { xs: 'fixed', sm: 'initial' },
+        top: { xs: '60px', sm: 'initial' }
+      }}>
+        <Box sx={{ display: "flex", mt: '5px' }}>
+          <Typography sx={{ fontSize: '12px', color: 'black', fontWeight: '900', lineHeight: '12px' }}>
+            MODULE 1 > CHAPTER > QUIZ
+          </Typography>
+        </Box>
+
+        <Box
+          ref={containerRef}
+          sx={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: "nowrap", // prevents wrapping
+            overflowX: "auto",  // enables horizontal scroll when overflowing
+            justifyContent: "start",
+            position: "relative",
+            marginTop: "6px",
+            "::-webkit-scrollbar": { display: "none" },
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
+        >
+          <svg
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: svgWidth, // covers full scrollable width
+              height: "100%",
+              pointerEvents: "none",
+            }}
+          >
+            {questions.slice(0, -1).map((_, index) => {
+              const start = getBoxCenter(index);
+              const end = getBoxCenter(index + 1);
+              return (
+                <line
+                  key={index}
+                  x1={start.x}
+                  y1={start.y}
+                  x2={end.x}
+                  y2={end.y}
+                  stroke="#31CEB8"
+                  strokeWidth="1px"
+                />
+              );
+            })}
+          </svg>
+
+          {questions.map((_, index) => (
+            <Button
+              key={index}
+              onClick={() => handleBoxClick(index)}
+              ref={(el) => (boxRefs.current[index] = el)}
+              sx={{
+                flexShrink: 0, // prevents button from shrinking and wrapping
+                width: "24px",
+                minWidth: 0,
+                height: "24px",
+                boxShadow: "none",
+                fontWeight: "800",
+                border: currentQuestionIndex === index
+                  ? "none"
+                  : "1px solid lightgrey",
+                padding: "0",
+                fontSize: solvedQuestions.includes(index)
+                  ? "15px"
+                  : currentQuestionIndex === index
+                  ? "17px"
+                  : "17px",
+                backgroundColor: solvedQuestions.includes(index)
+                  ? "#4CAF50"
+                  : currentQuestionIndex === index
+                  ? "black"
+                  : "white",
+                color:
+                  solvedQuestions.includes(index) || currentQuestionIndex === index
+                    ? "#fff"
+                    : "#B5B6B8",
+                "&:hover": {
+                  backgroundColor: solvedQuestions.includes(index)
+                    ? "#45a049"
+                    : currentQuestionIndex === index
+                    ? "black"
+                    : "#ccc",
+                },
+                transition: "background-color 0.3s",
+                zIndex: 1,
+              }}
+            >
+              {index + 1}
+            </Button>
+          ))}
+        </Box>
+
+        <Box sx={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography sx={{ flex: 1, fontSize: '16px', fontWeight: '500' }}>
+            Solved: {solvedQuestions.length}/{questions.length}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+            <AccessTimeIcon sx={{ height: '24px' }} />
+            <Typography sx={{ fontSize: '16px', fontWeight: '500' }}>{formatTime(timeLeft)}</Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          borderRadius: 3,
+          backgroundColor: isReviewMode ? 'yellow' : 'white',
+          gap: '32px',
+          padding: '16px',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          width: { xs: '94%', sm: '100%' },
+          maxWidth: '686px',
+          margin: '0 auto',
+        }}
+      >
+        <Box sx={{ gap: '16px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              marginBottom: '15px',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>Report</Typography>
+              <TourIcon sx={{ color: '#E1004D' }} />
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <GradeSharpIcon sx={{ height: '21px', color: 'yellow' }} />
+              <Typography sx={{ fontWeight: '800', fontSize: '18px' }}>·</Typography>
+              <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
+                Review
+                <Switch checked={isReviewMode} onChange={handleReviewToggle} />
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: questions[currentQuestionIndex]?.image ? { xs: 'column-reverse', sm: 'row' } : 'column',
+              gap: '16px',
+              width: '100%',
+              mb: 2,
+            }}
+          >
+            {questions[currentQuestionIndex]?.image && (
+              <Box sx={{ width: '100%', height: '100%' }}>
+                <Box
+                  component="img"
+                  src={questions[currentQuestionIndex]?.image}
+                  alt="Question illustration"
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    maxHeight: '192px',
+                    boxShadow: 5,
+                    boxSizing: 'border-box',
+                    objectFit: 'cover',
+                    borderRadius: 3,
+                    display: 'block',
+                    border: '1px solid lightgrey',
+                  }}
+                />
+              </Box>
+            )}
+
+            <Box
+              sx={{
+                width: '100%',
+                height: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+            >
+              <Typography
+                variant="body1"
+                component="p"
+                sx={{
+                  lineHeight: 1.5,
+                  width: '100%',
+                  color: '#7F8184',
+                  textAlign: 'left',
+                }}
+              >
+                {questions[currentQuestionIndex]?.text}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+            <Grid container spacing={1}>
+              {questions[currentQuestionIndex]?.options.map((option, index) => {
+                const optionText = option.text || option;
+                const isImageOption = typeof option === 'string' && option.match(/\.jpg|\.png|\.jpeg/);
+                return (
+                  <Grid item xs={isImageOption ? 6 : 12} key={index}>
+                    <Paper
+                      sx={{
+                        width: isImageOption ? '300px' : '100%',
+                        height: isImageOption ? '225px' : '44px',
+                        boxSizing: 'border-box',
+                        display: 'flex',
+                        flexDirection: isImageOption ? 'column' : 'row',
+                        borderRadius: '10px',
+                        boxShadow: 'none',
+                        alignItems: 'center',
+                        bgcolor: checkedStates[`${currentQuestionIndex}-${index}`] ? '#31CEB8' : '#EAFAF8',
+                        border: '.5px solid #E6EBF0',
+                        color: checkedStates[`${currentQuestionIndex}-${index}`] ? '#021C33' : '#56585C',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                      onClick={(e) => {
+                        if (e.target.type !== 'checkbox') {
+                          handleCheckboxChange(index, option);
+                        }
+                      }}
+                    >
+                      <Checkbox
+                        checked={!!checkedStates[`${currentQuestionIndex}-${index}`]}
+                        onChange={() => handleCheckboxChange(index, option)}
+                        sx={{
+                          '&.Mui-checked': { color: '#15574D' },
+                        }}
+                      />
+                      {isImageOption ? (
+                        <Box
+                          component="img"
+                          src={option}
+                          alt="Option image"
+                          sx={{
+                            width: '270px',
+                            height: '173px',
+                            borderRadius: 2,
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <Typography
+                          sx={{
+                            color: checkedStates[`${currentQuestionIndex}-${index}`] ? 'black' : '#56585C',
+                            fontSize: '16px',
+                            fontWeight: '400',
+                          }}
+                        >
+                          {optionText}
+                        </Typography>
+                      )}
+                    </Paper>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Box>
+        </Box>
+
+        {/* Navigation Buttons */}
+        <Box sx={{ display: 'flex', gap: '8px', justifyContent: 'center', width: '100%', mt: { sm: 0, xs: '20%' } }}>
+          <SecondaryButton variant="contained" onClick={onBack} disabled={currentQuestionIndex === 0}>
+            Back
+          </SecondaryButton>
+          <PrimaryButton variant="contained" onClick={handleNext} disabled={isSubmitting}>
+  {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"}
+  {isSubmitting && (
+    <CircularProgress size={24} sx={{ color: "white", ml: 1 }} />
+  )}
+</PrimaryButton>
+
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+export default QuizHeader;
+
+
+--- src\Components\Quiz\QuizHeader2.js ---
+import React, { useState, useEffect, useRef } from "react";
+import { Box, Typography, Paper, Button, Grid, Checkbox } from "@mui/material";
+import neuronImage from '../../Assets/neuron.jpg';
+import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons'
+import FlagIcon from '@mui/icons-material/Flag';
+import TourIcon from '@mui/icons-material/Tour';
+import GradeSharpIcon from '@mui/icons-material/GradeSharp';
+import Switch from '@mui/material/Switch';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import { CheckBox, CheckBoxOutlineBlank, CheckBoxSharp } from "@mui/icons-material";
+
+function QuizHeader2({ questions, currentQuestionIndex, onNext, onBack, onQuestionClick }) {
+    const [solvedQuestions, setSolvedQuestions] = useState([]);
+    const [timeLeft, setTimeLeft] = useState(900);
+    const boxRefs = useRef([]);
+    const containerRef = useRef();
+    const [checkedStates, setCheckedStates] = useState({});
+
+
+    const handleCheckboxChange = (questionIndex, optionIndex) => {
+        setCheckedStates((prev) => ({
+            ...prev,
+            [questionIndex]: {
+                ...prev[questionIndex],
+                [optionIndex]: !prev[questionIndex]?.[optionIndex], // Toggle specific option
+            },
+        }));
+    };
+
+
+    useEffect(() => {
+        if (timeLeft > 0) {
+            const timer = setInterval(() => {
+                setTimeLeft((prev) => prev - 1);
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [timeLeft]);
+
+    const handleBoxClick = (index) => {
+        onQuestionClick(index);
+    };
+
+    const markAsSolved = () => {
+        if (!solvedQuestions.includes(currentQuestionIndex)) {
+            setSolvedQuestions([...solvedQuestions, currentQuestionIndex]);
+        }
+    };
+
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+    };
+
+    const getBoxCenter = (index) => {
+        if (boxRefs.current[index] && containerRef.current) {
+            const box = boxRefs.current[index].getBoundingClientRect();
+            const container = containerRef.current.getBoundingClientRect();
+            return {
+                x: box.left - container.left + box.width / 2,
+                y: box.top - container.top + box.height / 2,
+            };
+        }
+        return { x: 0, y: 0 };
+    };
+
+    const hasImageOptions = questions[currentQuestionIndex]?.options.some(option => typeof option === 'string' && option.match(/\.jpg|\.png|\.jpeg/));
+
+    return (
+        <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '16px',
+            width: '100%',
+            padding: { xs: '0px', sm: '16px' }
+        }}>
+            <Box sx={{
+                display: "flex",
+                flexDirection: "column",
+                maxWidth: '686px',
+                width: { xs: '100%', sm: '100%' },
+                backgroundColor: "white",
+                padding: '16px',
+                boxSizing: 'border-box',
+                gap: '16px',
+                zIndex: 2,
+                position: { xs: 'fixed', sm: 'initial' },
+                top: { xs: '60px', sm: 'initial' }
+            }}>
+                <Box sx={{ display: "flex", mt: '5px' }}>
+                    <Typography sx={{ fontSize: '12px', color: 'black', fontWeight: '900', lineHeight: '12px' }}>MODULE 1 > CHAPTER > QUIZ</Typography>
+                </Box>
+
+                <Box ref={containerRef} sx={{ display: "flex", gap: '8px', flexWrap: "wrap", justifyContent: "start", position: "relative", marginTop: '6px' }}>
+                    <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+                        {questions.slice(0, -1).map((_, index) => {
+                            const start = getBoxCenter(index);
+                            const end = getBoxCenter(index + 1);
+                            return (
+                                <line key={index} x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke="#31CEB8" strokeWidth="1px" />
+                            );
+                        })}
+                    </svg>
+
+                    {questions.map((_, index) => (
+                        <Button key={index} onClick={() => handleBoxClick(index)} ref={(el) => (boxRefs.current[index] = el)}
+                            sx={{
+                                width: '24px', minWidth: 0, height: '24px', boxShadow: 'none', fontWeight: '800',
+                                border: currentQuestionIndex === index ? 'none' : '1px solid lightgrey', padding: '0',
+                                fontSize: solvedQuestions.includes(index) ? "15px" : currentQuestionIndex === index ? "17px" : "17px",
+                                backgroundColor: solvedQuestions.includes(index) ? "#4CAF50" : currentQuestionIndex === index ? "black" : "white",
+                                color: solvedQuestions.includes(index) || currentQuestionIndex === index ? "#fff" : "#B5B6B8",
+                                "&:hover": { backgroundColor: solvedQuestions.includes(index) ? "#45a049" : currentQuestionIndex === index ? "#black" : "#ccc" },
+                                transition: "background-color 0.3s", zIndex: 1,
+                            }}>
+                            {index + 1}
+                        </Button>
+                    ))}
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography sx={{ flex: 1, fontSize: '16px', fontWeight: '500' }}>Solved: {solvedQuestions.length}/{questions.length}</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+                        <AccessTimeIcon sx={{ height: '24px' }} />
+                        <Typography sx={{ fontSize: '16px', fontWeight: '500' }}>{formatTime(timeLeft)}</Typography>
+                    </Box>
+                </Box>
+            </Box>
+
+            <Box
+                sx={{
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    border: '1px solid #E9E9E9',
+                    gap: '32px',
+                    padding: '16px',
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: { xs: '95%', sm: '100%' }, // Use 100% width to fill the parent container
+                    maxWidth: '686px', // Set a maximum width for larger screens
+                    margin: '0 auto', // Center the box horizontally
+                }}
+            >
+                <Box sx={{ gap: '16px' }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            marginBottom: '15px',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>Report</Typography>
+                            <TourIcon sx={{ color: '#E1004D' }} />
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <GradeSharpIcon sx={{ height: '21px', color: 'yellow' }} />
+                            <Typography sx={{ fontWeight: '800', fontSize: '18px' }}>·</Typography>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>Review<Switch /></Typography>
+                        </Box>
+                    </Box>
+
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            gap: '16px',
+                            width: '100%',
+                            //   mb: 2,
+                        }}
+                    >
+                        {!hasImageOptions && (
+                            <Box sx={{ width: '100%', height: { xs: '192px', sm: '192px' } }}>
+                                <Box
+                                    component="img"
+                                    src={questions[currentQuestionIndex]?.image} // Fetch image from questions array
+                                    alt="Question illustration"
+                                    sx={{
+
+                                        width: '100%',
+                                        height: '100%',
+                                        boxShadow: 5,
+                                        boxSizing: 'border-box',
+                                        objectFit: 'cover',
+                                        borderRadius: 3,
+                                        display: 'block',
+                                        border: '1px solid lightgrey',
+                                    }}
+                                />
+                            </Box>
+                        )}
+                        <Box
+                            sx={{
+                                width: '100%',
+                                height: { xs: 'auto', sm: 'auto' },
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                            }}
+                        >
+                            <Typography
+                                variant="body1"
+                                component="p"
+                                sx={{ lineHeight: 1.5, width: '100%', color: '#7F8184' }}
+                            >
+                                {questions[currentQuestionIndex]?.text}
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                        <Grid container spacing={2} sx={{ padding: '16px' }
+                        }
+                        >
+                            {questions[currentQuestionIndex]?.options.map((option, index) => {
+                                const optionImage = option.Image || option;
+                                const isImageOption = typeof option === 'string' && option.match(/\.jpg|\.png|\.jpeg/);
+                                return (
+                                    <Grid item xs={isImageOption ? 16 : 12} sm={isImageOption ? 6 : 12} key={index} >
+                                        <Paper
+                                            sx={{
+                                                maxWidth: { xs: '400px', sm: '300px' },
+                                                width: '100%',
+                                                maxHeight: '225px',
+                                                height: '100%',
+                                                boxSizing: 'border-box',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                borderRadius: '10px',
+                                                boxShadow: 5,
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                bgcolor: checkedStates[currentQuestionIndex]?.[index] ? '#31CEB8' : '#EAFAF8',
+                                                border: '.5px solid #E6EBF0',
+                                                color: checkedStates[currentQuestionIndex]?.[index] ? '#021C33' : '#56585C',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                                paddingBottom: '16px',
+                                                paddingTop: '8px',
+                                                '&:hover': {
+                                                    bgcolor: checkedStates[currentQuestionIndex]?.[index] ? '#31CEB8' : '#EAFAF8', // No hover change
+                                                },
+                                            }}
+                                            onClick={(e) => {
+                                                if (e.target.type !== 'checkbox') {
+                                                    handleCheckboxChange(currentQuestionIndex, index);
+                                                }
+                                            }}
+                                        >
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    width: '100%',
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
+                                                <Checkbox
+                                                    checked={!!checkedStates[currentQuestionIndex]?.[index]}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation(); // Prevent click event bubbling
+                                                        handleCheckboxChange(currentQuestionIndex, index);
+                                                    }}
+                                                    sx={{
+                                                        '&.Mui-checked': { color: 'white' },
+                                                    }}
+                                                />
+                                                <Typography
+                                                    sx={{
+                                                        fontSize: '16px',
+                                                        fontWeight: '500',
+                                                        color: 'black',
+                                                    }}
+                                                >
+                                                    {`Option ${String.fromCharCode(65 + index)}`}
+                                                </Typography>
+                                            </Box>
+
+                                            {isImageOption && (
+                                                <Box
+                                                    component="img"
+                                                    src={optionImage}
+                                                    alt={`Option ${index + 1}`}
+                                                    sx={{
+                                                        width: '100%',
+                                                        height: '173px',
+                                                        borderRadius: 2,
+                                                        border: '1px solid #E9E9E9',
+                                                        objectFit: 'cover',
+                                                    }}
+                                                />
+                                            )}
+                                        </Paper>
+
+
+
+
+                                    </Grid>
+                                );
+                            })}
+                        </Grid>
+                    </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: '8px', justifyContent: 'center', width: '100%' }}>
+                    <SecondaryButton variant="contained" onClick={onBack}>Back</SecondaryButton>
+                    <PrimaryButton variant="contained" onClick={onNext}>Next</PrimaryButton>
+                </Box>
+            </Box>
+        </Box>
+    );
+}
+
+export default QuizHeader2;
+
+--- src\Components\Quiz\QuizHeaderSolved.js ---
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
+  Checkbox,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Switch,
+} from "@mui/material";
+import { PrimaryButton, SecondaryButton } from "../Buttons/Buttons";
+import TourIcon from "@mui/icons-material/Tour";
+import GradeSharpIcon from "@mui/icons-material/GradeSharp";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "react-query";
+
+function QuizHeader({ onOptionSelect }) {
+  // Local state for review mode, timer, current question index and filters.
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(900);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [filterType, setFilterType] = useState("all"); // "all", "correct", "incorrect"
+  const [difficultyFilter, setDifficultyFilter] = useState("all");
+  // This state holds the index of the option selected originally (keyed by question originalIndex)
+  const [checkedStates, setCheckedStates] = useState({});
+
+  // Refs for SVG connector lines
+  const boxRefs = useRef([]);
+  const containerRef = useRef();
+  const navigate = useNavigate();
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [timeLeft]);
+
+  // Query function to fetch quiz attempt data
+  const fetchQuizAttemptData = async () => {
+    const authToken = localStorage.getItem("authToken");
+    const userId = localStorage.getItem("userId");
+    const Base_Url = process.env.REACT_APP_BASE_URL;
+    const response = await fetch(`${Base_Url}/quiz-attempts/latest/?student=${userId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error("Authorization failed or network error");
+    }
+    return response.json();
+  };
+
+  // Use React Query to fetch the quiz attempt data.
+  const { data: quizData, isLoading, error } = useQuery(
+    ["quizAttempt", localStorage.getItem("userId")],
+    fetchQuizAttemptData
+  );
+
+  // Format the raw quiz data into questions and initial checked states.
+  const { questions, initialCheckedStates, attemptTime } = useMemo(() => {
+    if (!quizData) return { questions: [], initialCheckedStates: {}, attemptTime: null };
+    const formattedQuestions = quizData.questions.map((q, index) => ({
+      originalIndex: index,
+      text: q.question_text,
+      options: q.options.map((option) => ({
+        id: option.option_id,
+        text: option.option_text,
+        isCorrect: option.option_is_correct,
+      })),
+      selectedOption: q.selected_option ? q.selected_option.id : null,
+      isCorrect: q.is_correct,
+      difficulty: q.difficulty?.text ? q.difficulty.text.toLowerCase() : "unknown",
+      q_tags: q.q_tags,
+      image: q.image || null, // if available
+    }));
+    const initialChecked = {};
+    formattedQuestions.forEach((q) => {
+      const selectedIndex = q.options.findIndex((opt) => opt.id === q.selectedOption);
+      initialChecked[q.originalIndex] = selectedIndex;
+    });
+    return { questions: formattedQuestions, initialCheckedStates: initialChecked, attemptTime: quizData.attempt_time };
+  }, [quizData]);
+
+  // When the formatted initial checked states are computed, update local state.
+  useEffect(() => {
+    if (Object.keys(initialCheckedStates).length > 0) {
+      setCheckedStates(initialCheckedStates);
+    }
+  }, [initialCheckedStates]);
+
+  // Derive filtered questions based on filter type and difficulty.
+  const filteredQuestions = useMemo(() => {
+    let filtered = [...questions];
+    if (filterType === "correct") {
+      filtered = filtered.filter((q) => q.isCorrect);
+    } else if (filterType === "incorrect") {
+      filtered = filtered.filter((q) => !q.isCorrect);
+    }
+    if (difficultyFilter !== "all") {
+      filtered = filtered.filter((q) => q.difficulty === difficultyFilter);
+    }
+    return filtered;
+  }, [questions, filterType, difficultyFilter]);
+
+  // Reset current question index when filters change.
+  useEffect(() => {
+    setCurrentQuestionIndex(0);
+  }, [filterType, difficultyFilter, questions]);
+
+  // Format attempt time (MM:SS) for display.
+  const formatTime = (isoString) => {
+    const date = new Date(isoString);
+    const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(date.getUTCSeconds()).padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  };
+
+  // Filter change handlers.
+  const handleFilterChange = (event) => {
+    setFilterType(event.target.value);
+  };
+
+  const handleDifficultyChange = (event) => {
+    setDifficultyFilter(event.target.value);
+  };
+
+  // Navigation functions for the quiz.
+  const handleNext = () => {
+    if (currentQuestionIndex < filteredQuestions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    }
+  };
+
+  const onBack = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleReviewToggle = () => {
+    setIsReviewMode((prev) => !prev);
+  };
+
+  const handleBoxClick = (index) => {
+    setCurrentQuestionIndex(index);
+  };
+
+  // Helper to compute center of a button (for SVG connector lines)
+  const getBoxCenter = (index) => {
+    if (boxRefs.current[index] && containerRef.current) {
+      const box = boxRefs.current[index].getBoundingClientRect();
+      const container = containerRef.current.getBoundingClientRect();
+      return {
+        x: box.left - container.left + box.width / 2,
+        y: box.top - container.top + box.height / 2,
+      };
+    }
+    return { x: 0, y: 0 };
+  };
+
+  // Determine background color for the main question container.
+  const mainContainerBg =
+    filteredQuestions[currentQuestionIndex]?.isCorrect === false
+      ? "#FFC5C6"
+      : isReviewMode
+      ? "yellow"
+      : "white";
+
+  if (isLoading) return <p>Loading quiz attempt data...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+  if (!questions.length) return <p>No quiz data available.</p>;
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "16px",
+        width: "100%",
+        padding: { xs: "0px", sm: "16px" },
+      }}
+    >
+      {/* Header with score and attempt time */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          maxWidth: "686px",
+          width: { xs: "100%", sm: "100%" },
+          backgroundColor: "white",
+          zIndex: 1,
+          padding: "16px",
+          boxSizing: "border-box",
+          gap: "16px",
+          position: { xs: "fixed", sm: "initial" },
+          top: { xs: "60px", sm: "initial" },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography sx={{ fontSize: "16px", fontWeight: "500" }}>
+            Correct: {questions.filter((q) => q.isCorrect).length}/{questions.length}
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <AccessTimeIcon />
+            <Typography sx={{ fontSize: "16px", fontWeight: "500" }}>
+              {attemptTime ? formatTime(attemptTime) : "N/A"}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Navigation Buttons and SVG Connector */}
+        <Box
+          ref={containerRef}
+          sx={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: "wrap",
+            justifyContent: "start",
+            position: "relative",
+            marginTop: "6px",
+          }}
+        >
+          <svg
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none",
+            }}
+          >
+            {filteredQuestions.slice(0, -1).map((_, index) => {
+              const start = getBoxCenter(index);
+              const end = getBoxCenter(index + 1);
+              return (
+                <line
+                  key={index}
+                  x1={start.x}
+                  y1={start.y}
+                  x2={end.x}
+                  y2={end.y}
+                  stroke="#31CEB8"
+                  strokeWidth="1px"
+                />
+              );
+            })}
+          </svg>
+          {filteredQuestions.map((_, index) => (
+            <Button
+              key={index}
+              onClick={() => handleBoxClick(index)}
+              ref={(el) => (boxRefs.current[index] = el)}
+              sx={{
+                width: "24px",
+                minWidth: 0,
+                height: "24px",
+                boxShadow: "none",
+                fontWeight: "800",
+                border: currentQuestionIndex === index ? "none" : "1px solid lightgrey",
+                padding: "0",
+                fontSize:
+                  filteredQuestions[index]?.isCorrect || currentQuestionIndex === index
+                    ? "17px"
+                    : "15px",
+                backgroundColor:
+                  filteredQuestions[index]?.isCorrect === true
+                    ? "#4CAF50"
+                    : filteredQuestions[index]?.isCorrect === false
+                    ? "#E57373"
+                    : currentQuestionIndex === index
+                    ? "black"
+                    : "white",
+                color:
+                  filteredQuestions[index]?.isCorrect || currentQuestionIndex === index
+                    ? "#fff"
+                    : "#B5B6B8",
+                "&:hover": {
+                  backgroundColor:
+                    filteredQuestions[index]?.isCorrect || currentQuestionIndex === index
+                      ? "black"
+                      : "#ccc",
+                },
+                transition: "background-color 0.3s",
+                zIndex: 1,
+              }}
+            >
+              {index + 1}
+            </Button>
+          ))}
+        </Box>
+
+        {/* Filter Controls */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mt: "16px",
+          }}
+        >
+          <FormControl
+            fullWidth
+            variant="outlined"
+            sx={{ width: "145px", borderRadius: "20px", height: "35px" }}
+          >
+            <InputLabel sx={{ color: "#b0b0b0", fontSize: "18px", top: "-8px" }}>
+              Filter Questions
+            </InputLabel>
+            <Select
+              value={filterType}
+              onChange={handleFilterChange}
+              label="Filter Questions"
+              displayEmpty
+              renderValue={(selected) => (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    color: "#b0b0b0",
+                    fontSize: "18px",
+                    padding: 0,
+                    height: "30px",
+                  }}
+                >
+                  <FilterListIcon sx={{ marginRight: "5px", fontSize: "16px" }} />
+                  {selected === "" ? "Correct Tag" : selected}
+                </Box>
+              )}
+              sx={{
+                color: "#b0b0b0",
+                borderRadius: "20px",
+                border: "1px solid #b0b0b0",
+                height: "35px",
+                fontSize: "18px",
+                padding: "5px 4px",
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: { maxHeight: "200px", fontSize: "14px" },
+                },
+              }}
+            >
+              <MenuItem value="all" sx={{ fontSize: "14px" }}>
+                All Questions
+              </MenuItem>
+              <MenuItem value="correct" sx={{ fontSize: "14px" }}>
+                Correct
+              </MenuItem>
+              <MenuItem value="incorrect" sx={{ fontSize: "14px" }}>
+                Incorrect
+              </MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl
+            fullWidth
+            variant="outlined"
+            sx={{ width: "150px", borderRadius: "20px", height: "35px" }}
+          >
+            <InputLabel sx={{ color: "#b0b0b0", fontSize: "18px", top: "-8px" }}>
+              Difficulty
+            </InputLabel>
+            <Select
+              value={difficultyFilter}
+              onChange={handleDifficultyChange}
+              label="Difficulty"
+              displayEmpty
+              renderValue={(selected) => (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    color: "#b0b0b0",
+                    height: "30px",
+                    fontSize: "18px",
+                  }}
+                >
+                  <FilterListIcon sx={{ marginRight: "5px", fontSize: "16px" }} />
+                  {selected === "" ? "Difficulty" : selected}
+                </Box>
+              )}
+              sx={{
+                color: "#b0b0b0",
+                borderRadius: "20px",
+                border: "1px solid #b0b0b0",
+                height: "35px",
+                fontSize: "18px",
+                padding: "5px 4px",
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: { maxHeight: "200px", fontSize: "12px" },
+                },
+              }}
+            >
+              <MenuItem value="all" sx={{ fontSize: "12px" }}>
+                All
+              </MenuItem>
+              <MenuItem value="easy" sx={{ fontSize: "12px" }}>
+                Easy
+              </MenuItem>
+              <MenuItem value="medium" sx={{ fontSize: "12px" }}>
+                Medium
+              </MenuItem>
+              <MenuItem value="hard" sx={{ fontSize: "12px" }}>
+                Hard
+              </MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
+
+      {/* Main Question Display */}
+      <Box
+        sx={{
+          borderRadius: 3,
+          backgroundColor: mainContainerBg,
+          gap: "32px",
+          padding: "16px",
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "column",
+          width: { xs: "94%", sm: "100%" },
+          maxWidth: "686px",
+          margin: "0 auto",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: "15px",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: "2px" }}>
+            <Typography sx={{ fontWeight: "600", fontSize: "14px" }}>
+              Report
+            </Typography>
+            <TourIcon sx={{ color: "#E1004D" }} />
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <GradeSharpIcon sx={{ height: "21px", color: "yellow" }} />
+            <Typography sx={{ fontWeight: "800", fontSize: "18px" }}>·</Typography>
+            <Typography sx={{ fontWeight: "600", fontSize: "14px" }}>
+              Review
+              <Switch checked={isReviewMode} onChange={handleReviewToggle} />
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: filteredQuestions[currentQuestionIndex]?.image
+              ? { xs: "column-reverse", sm: "row" }
+              : "column",
+            gap: "16px",
+            width: "100%",
+            mb: 2,
+          }}
+        >
+          {filteredQuestions[currentQuestionIndex]?.image && (
+            <Box sx={{ width: "100%", height: "100%" }}>
+              <Box
+                component="img"
+                src={filteredQuestions[currentQuestionIndex]?.image}
+                alt="Question illustration"
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  maxHeight: "192px",
+                  boxShadow: 5,
+                  boxSizing: "border-box",
+                  objectFit: "cover",
+                  borderRadius: 3,
+                  display: "block",
+                  border: "1px solid lightgrey",
+                }}
+              />
+            </Box>
+          )}
+          <Box
+            sx={{
+              width: "100%",
+              height: "auto",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}
+          >
+            <Typography
+              variant="body1"
+              component="p"
+              sx={{
+                lineHeight: 1.5,
+                width: "100%",
+                color: "#7F8184",
+                textAlign: "left",
+              }}
+            >
+              {filteredQuestions[currentQuestionIndex]?.text}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Grid container spacing={1}>
+          {filteredQuestions[currentQuestionIndex]?.options.map((option, index) => {
+            const originalIndex = filteredQuestions[currentQuestionIndex].originalIndex;
+            // Restore the checkbox functionality using checkedStates.
+            const isSelected = checkedStates[originalIndex] === index;
+            // Determine correct option for current question
+            const correctOption = filteredQuestions[currentQuestionIndex]?.options.find(
+              (opt) => opt.isCorrect
+            );
+            // Set default background and checkbox colors.
+            let backgroundColor = "#EAFAF8";
+            let checkboxColor = "#000";
+            if (isSelected) {
+              backgroundColor = option.isCorrect ? "#41723A" : "#FF4447";
+              checkboxColor = "#fff";
+            }
+            // If the answer is wrong, highlight the correct option in green.
+            if (!filteredQuestions[currentQuestionIndex].isCorrect && option.isCorrect) {
+              backgroundColor = "#4CAF50";
+            }
+            return (
+              <Grid item xs={12} key={index}>
+                <Paper
+                  sx={{
+                    padding: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor,
+                    transition: "background-color 0.3s ease",
+                    cursor: "default",
+                  }}
+                >
+                  <Checkbox
+                    checked={isSelected}
+                    disabled
+                    sx={{
+                      color: checkboxColor,
+                      "&.Mui-checked": { color: checkboxColor },
+                    }}
+                  />
+                  <Typography>{option.text}</Typography>
+                </Paper>
+              </Grid>
+            );
+          })}
+        </Grid>
+
+        <Box
+          sx={{
+            display: "flex",
+            gap: "8px",
+            justifyContent: "center",
+            width: "100%",
+            mt: "20px",
+          }}
+        >
+          <SecondaryButton variant="contained" onClick={onBack}>
+            Back
+          </SecondaryButton>
+          <PrimaryButton
+            variant="contained"
+            onClick={
+              currentQuestionIndex === filteredQuestions.length - 1
+                ? () => navigate("/courses")
+                : handleNext
+            }
+          >
+            {currentQuestionIndex === filteredQuestions.length - 1 ? "Go to Home" : "Next"}
+          </PrimaryButton>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+export default QuizHeader;
+
+
+--- src\Components\Sidebar\Demo.js ---
+// Demo.js
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PagesIcon from '@mui/icons-material/Pages';
+import SchoolIcon from '@mui/icons-material/School';
+import AnnouncementIcon from '@mui/icons-material/Announcement';
+
+export const navigationData = {
+    Navigation: {
+        Students: {
+            Dashboard: {
+                url: '/courses',
+                icon: DashboardIcon
+            },
+            // Page: {
+            //     url: 'www.page',
+            //     icon: PagesIcon
+            // },
+            // Courses: {
+            //     url: '/courses',
+            //     icon: SchoolIcon
+            // },
+            Announcements: {
+                url: 'www.Permanent',
+                icon: AnnouncementIcon
+            }
+        },
+        // Instructor: {
+        //     Dashboard: {
+        //         url: '',
+        //         icon: DashboardIcon
+        //     },
+        //     Page: {
+        //         url: '',
+        //         icon: PagesIcon
+        //     },
+        //     Courses: {
+        //         url: '',
+        //         icon: SchoolIcon
+        //     },
+        //     Announcements: {
+        //         url: '',
+        //         icon: AnnouncementIcon
+        //     }
+        // }
+    }
+};
+
+--- src\Components\Sidebar\Sidebar.js ---
+import React, { useState } from 'react';
+import { styled } from '@mui/material/styles';
+import { AppBar, Toolbar, Typography, Box, InputBase, Button, IconButton, Divider } from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import { RiMenuUnfold3Fill } from "react-icons/ri";
+import { RiMenuFold3Fill } from "react-icons/ri";
+import Header from '../Header/Header';
+import SidebarItems from './SidebarItems';
+import { navigationData } from './Demo'; // Correct import
+
+
+const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
+  backgroundColor: '#03162A',
+  color: '#ffffff',
+  height: '100vh',
+  width: sidebarOpen ? '235px' : '60px',
+  transition: 'width 0.3s ease',
+  display: 'flex',
+  flexDirection: 'column',
+  overflowY: 'auto', // Add scroll for sidebar if content overflows
+
+}));
+
+
+
+
+const SidebarToggle = styled(IconButton)(({ sidebarOpen }) => ({
+  position: 'fixed',
+  top: '20px',
+  left: sidebarOpen ? 'calc(234px - 20px)' : '13px', // Adjusted right position
+  backgroundColor: '#ffffff',
+  color: '#000',
+  borderRadius: '20%',
+  width: '35px',
+  height: '35px',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+  zIndex: 1300,
+  fontSize: '1.6rem',
+  transition: 'left 0.5s ease', // Add transition
+  '&:hover': {
+    backgroundColor: '#f0f0f0',
+    transform: 'scale(1.1)',
+  },
+}));
+
+
+const SidebarItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(1),
+  cursor: 'pointer', // Make cursor pointer on hover
+  transition: 'transform 0.3s ease, background-color 0.3s ease', // Smooth transition for transform and background
+  '&:hover': {
+    transform: 'translateY(-5px)', // Translate along Y-axis
+    backgroundColor: '#002b47', // Highlight background on hover
+  },
+}));
+
+const SidebarItemNoHover = styled(SidebarItem)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+
+
+  backgroundColor: ' #03162A',
+  transition: 'transform 0.3s ease, background-color 0.3s ease', // Smooth transition for transform and background
+  '&:hover': {
+    transform: 'none', // Remove any hover transformation
+    backgroundColor: 'transparent', // Remove hover background color change
+  },
+}));
+
+const SidebarIcon = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  width: '24px',
+  height: '24px',
+  marginRight: theme.spacing(1),
+  marginLeft: '17px',
+}));
+
+const ContentContainer = styled(Box)(({ theme }) => ({
+  flexGrow: 1,
+  padding: theme.spacing(3),
+}));
+
+
+const BlackDivider = styled(Divider)(({ theme }) => ({
+  background: 'transparent',
+  height: '0.5px',
+  margin: theme.spacing(1, 0),
+  boxShadow: '0 2px 4px  rgba(255, 255, 255, 0.79)', // Add a subtle shadow at the top
+}));
+
+const Black2Divider = styled(Divider)(({ theme }) => ({
+  background: 'transparent',
+  height: '0.5px',
+  margin: theme.spacing(1, 0),
+  boxShadow: '0 -2px 6px rgba(255, 255, 255, 0.79)', // White shadow effect
+}));
+
+const FooterSection = styled(Box)(({ theme }) => ({
+  marginTop: 'auto',
+  display: 'flex',
+  flexDirection: 'column',
+  paddingBottom: theme.spacing(1),
+  backgroundColor: '#03162A', // Darker background similar to the Insight section
+}));
+
+const SidebarItemFooter = styled(SidebarItem)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: '#002b47', // Same highlight for footer items
+    transform: 'translateY(-5px)',
+  },
+}));
+
+export default function Sidebar({ sidebarOpen, toggleSidebar,  onLogout  }) {
+  return (
+    <Box display="flex">
+      {/* Sidebar */}
+      <SidebarContainer sidebarOpen={sidebarOpen}>
+        <SidebarToggle sidebarOpen={sidebarOpen} onClick={toggleSidebar}>
+          {sidebarOpen ? <RiMenuFold3Fill /> : <RiMenuUnfold3Fill />}
+        </SidebarToggle>
+        {sidebarOpen && (
+          <>
+            <SidebarItemNoHover sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 5 }}>
+              <img
+                src="/insighticon.png" // Adjust path if the file is in a subfolder
+                alt="Insight Icon"
+                style={{
+                  width: '150px', // Adjust width
+                  height: 'auto', // Maintain aspect ratio
+                }}
+              />
+            </SidebarItemNoHover>
+ <BlackDivider />
+   <SidebarItems/>
+   <FooterSection>
+  <Black2Divider />
+  {[
+    { icon: SettingsIcon, text: 'Settings' },
+    { icon: ExitToAppIcon, text: 'Logout' ,onClick: onLogout }
+  ].map((item, index) => (
+    <SidebarItemFooter
+    onClick={item.onClick}
+    key={index}>
+      <SidebarIcon>
+        <item.icon />
+      </SidebarIcon>
+      <Typography sx={{ fontFamily: "'Roboto', sans-serif" }} fontSize="0.9rem">
+        {item.text}
+      </Typography>
+    </SidebarItemFooter>
+  ))}
+</FooterSection>
+          </>
+        )}
+        {!sidebarOpen && (
+  <>
+    {/* Main Navigation Icons */}
+    {Object.entries(navigationData.Navigation.Students).map(([key, item], index) => (
+      <SidebarItem 
+        key={key}
+        sx={{ 
+          ml: '-3px',
+          mt: index === 0 ? '60px' : undefined 
+        }}
+      >
+        <SidebarIcon>
+          <item.icon />
+        </SidebarIcon>
+      </SidebarItem>
+    ))}
+
+    {/* Footer Icons - Pushed to bottom */}
+    <Box sx={{ marginTop: 'auto' }}>
+      {[
+        { icon: SettingsIcon, text: 'Settings' },
+        { icon: ExitToAppIcon, text: 'Logout', onClick: onLogout  }
+      ].map((item, index) => (
+        <SidebarItem   onClick={item.onClick}
+          key={`footer-${index}`}
+          sx={{ ml: '-3px' , mb:'10px' , gap:'3px' }}
+        >
+          <SidebarIcon>
+            <item.icon />
+          </SidebarIcon>
+        </SidebarItem>
+      ))}
+    </Box>
+  </>
+)}
+      </SidebarContainer>
+    </Box>
+
+  );
+}
+
+
+
+--- src\Components\Sidebar\SidebarItems.js ---
+import React, { useState } from 'react';
+import { styled } from '@mui/material/styles';
+import { Box, Typography, Divider } from '@mui/material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import { navigationData } from './Demo'; // Correct import
+import { useNavigate, useLocation } from 'react-router-dom'; // Import useNavigate and useLocation
+
+const SubheadingSection = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: theme.spacing(2),
+  zIndex: 10,
+  position: 'relative',
+  fontSize: '14px',
+  fontFamily: "'Roboto', sans-serif",
+  fontWeight: '600',
+  cursor: 'pointer',
+  userSelect: 'none',
+  marginTop: '-4px',
+  marginBottom: '-8px',
+}));
+
+const SidebarItem = styled(Box)(({ theme, active }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(1),
+  cursor: 'pointer',
+  transition: 'transform 0.3s ease, background-color 0.3s ease',
+  backgroundColor: active ? '#004b6a' : 'transparent', // Highlight active item
+  color: active ? '#ffffff' : '#b0c4de',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    backgroundColor: '#002b47',
+    color: '#ffffff',
+  },
+}));
+
+const SidebarIcon = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  width: '24px',
+  height: '24px',
+  marginRight: theme.spacing(1),
+  marginLeft: '17px',
+}));
+
+const FadedDivider = styled(Divider)(({ theme }) => ({
+  background: 'linear-gradient(to right, transparent, #ffffff, transparent)',
+  height: '1px',
+  margin: theme.spacing(1, 2),
+}));
+
+function SidebarItems() {
+  const navigate = useNavigate(); // Initialize navigate hook
+  const location = useLocation(); // Access current route
+
+  const handleNavigation = (url) => {
+    if (url) navigate(url); // Redirect only if URL exists
+  };
+
+  const [expandedSections, setExpandedSections] = useState({
+    Students: true,
+    Instructor: true,
+  });
+
+  const toggleSection = (sectionName) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionName]: !prev[sectionName],
+    }));
+  };
+
+  return (
+    <Box
+      sx={{
+        maxHeight: 'calc(100vh - 100px)',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        pr: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        '&::-webkit-scrollbar': { width: '8px' },
+        '&::-webkit-scrollbar-thumb': { backgroundColor: '#888', borderRadius: '4px' },
+        '&::-webkit-scrollbar-track': { backgroundColor: '#03162A' },
+        paddingBottom: '100px',
+      }}
+    >
+      {Object.entries(navigationData.Navigation).map(([sectionName, sectionItems]) => (
+        <React.Fragment key={sectionName}>
+          <SubheadingSection onClick={() => toggleSection(sectionName)}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {sectionName.toUpperCase()}
+            </Typography>
+            {expandedSections[sectionName] ? <ExpandLess /> : <ExpandMore />}
+          </SubheadingSection>
+
+          {expandedSections[sectionName] &&
+            Object.entries(sectionItems).map(([itemName, itemData]) => {
+              const IconComponent = itemData.icon;
+              const isActive = location.pathname === itemData.url; // Check if the current route matches the item's URL
+
+              return (
+                <SidebarItem
+                  key={itemName}
+                  active={isActive}
+                  onClick={() => handleNavigation(itemData.url)}
+                >
+                  <SidebarIcon>
+                    <IconComponent />
+                  </SidebarIcon>
+                  <Typography fontSize="13px">{itemName}</Typography>
+                </SidebarItem>
+              );
+            })}
+
+          <FadedDivider />
+        </React.Fragment>
+      ))}
+    </Box>
+  );
+}
+
+export default SidebarItems;
+
+
+--- src\Components\Sidebar2\Demo2.js ---
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
+import QuizIcon from '@mui/icons-material/Quiz';
+import BookmarksIcon from '@mui/icons-material/Bookmarks';
+
+export const navigationData = {
+    Navigation: {
+      'Chapter 1': {
+        topics: {
+          'Topic 1': {
+            items: {
+              'Topic 1 Video': {
+                url: '',
+                icon: PlayCircleIcon,
+              },
+              'Topic 1 Quiz': {
+                url: 'www.page',
+                icon: QuizIcon,
+              },
+              'Topic 1 Notes': {
+                url: 'www.Temporary',
+                icon: BookmarksIcon,
+              },
+            },
+          },
+          'Topic 2': {
+            items: {
+              'Topic 2 Video': {
+                url: '',
+                icon: PlayCircleIcon,
+              },
+              'Topic 2 Quiz': {
+                url: 'www.page',
+                icon: QuizIcon,
+              },
+              'Topic 2 Notes': {
+                url: 'www.Temporary',
+                icon: BookmarksIcon,
+              },
+            },
+          },
+        },
+      },
+    },
+    AdditionalSections: {
+      'Chapter1 Quiz': {
+        icon: QuizIcon,
+      },
+      'Chapter1 Notes': {
+        icon: BookmarksIcon,
+      },
+    },
+  };
+
+--- src\Components\Sidebar2\Sidebar2.js ---
+import React from 'react';
+import { styled } from '@mui/material/styles';
+import { Box, IconButton, Divider, CircularProgress, Typography } from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import { RiMenuUnfold3Fill, RiMenuFold3Fill } from "react-icons/ri";
+import SidebarItems from './SidebarItems2';
+import CottageIcon from '@mui/icons-material/Cottage';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from 'react-query';
+
+const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
+  backgroundColor: '#03162A',
+  color: '#ffffff',
+  height: '100vh',
+  width: sidebarOpen ? '235px' : '60px',
+  transition: 'width 0.3s ease',
+  display: 'flex',
+  flexDirection: 'column',
+  overflowX: 'hidden',
+}));
+
+const SidebarToggle = styled(IconButton)(({ sidebarOpen }) => ({
+  position: 'fixed',
+  top: '20px',
+  left: sidebarOpen ? 'calc(234px - 20px)' : '13px',
+  backgroundColor: '#ffffff',
+  color: '#000',
+  borderRadius: '20%',
+  width: '35px',
+  height: '35px',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+  zIndex: 1300,
+  fontSize: '1.6rem',
+  transition: 'left 0.3s ease',
+  '&:hover': {
+    backgroundColor: '#f0f0f0',
+    transform: 'scale(1.1)',
+  },
+}));
+
+const SidebarItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(1),
+  cursor: 'pointer',
+  transition: 'transform 0.3s ease, background-color 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    backgroundColor: '#002b47',
+  },
+}));
+
+const SidebarItemNoHover = styled(SidebarItem)(({ theme }) => ({
+  backgroundColor: '#03162A',
+  transition: 'transform 0.3s ease, background-color 0.3s ease',
+  '&:hover': {
+    transform: 'none',
+    backgroundColor: 'transparent',
+  },
+}));
+
+const SidebarIcon = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  width: '24px',
+  height: '24px',
+  marginRight: theme.spacing(1),
+  marginLeft: '17px',
+}));
+
+const BlackDivider = styled(Divider)(({ theme }) => ({
+  background: 'transparent',
+  height: '0.5px',
+  margin: theme.spacing(1, 0),
+  boxShadow: '0 2px 4px rgba(255, 255, 255, 0.79)',
+}));
+
+const Black2Divider = styled(Divider)(({ theme }) => ({
+  background: 'transparent',
+  height: '0.5px',
+  margin: theme.spacing(1, 0),
+  boxShadow: '0 -2px 6px rgba(255, 255, 255, 0.79)',
+}));
+
+const FooterSection = styled(Box)(({ theme }) => ({
+  marginTop: 'auto',
+  display: 'flex',
+  flexDirection: 'column',
+  paddingBottom: theme.spacing(1),
+  backgroundColor: '#03162A',
+}));
+
+const SidebarItemFooter = styled(SidebarItem)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: '#002b47',
+    transform: 'translateY(-5px)',
+  },
+}));
+
+export default function Sidebar2({ sidebarOpen, toggleSidebar, onLogout }) {
+  const navigate = useNavigate();
+
+  // Use React Query to fetch the course data.
+  const fetchCourseData = async ({ signal }) => {
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) {
+      throw new Error("No auth token found.");
+    }
+    const response = await fetch("https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      signal,
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data[0]; // Assuming the first course is needed.
+  };
+
+  const { data: courseData, error, isLoading } = useQuery("courseData", fetchCourseData, {
+    staleTime: 5 * 60 * 1000, // Cache the data for 5 minutes.
+  });
+
+  if (error) {
+    console.error("Error fetching course data:", error);
+  }
+
+  return (
+    <Box display="flex">
+      <SidebarContainer sidebarOpen={sidebarOpen}>
+        <SidebarToggle sidebarOpen={sidebarOpen} onClick={toggleSidebar}>
+          {sidebarOpen ? <RiMenuFold3Fill /> : <RiMenuUnfold3Fill />}
+        </SidebarToggle>
+        {sidebarOpen ? (
+          <>
+            <SidebarItemNoHover
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                height: 'auto',
+                paddingLeft: '0',
+                paddingRight: '20px',
+                paddingTop: '18px',
+                paddingBottom: '12px',
+              }}
+            >
+              <img
+                src="/insighticon.png"
+                alt="Insight Icon"
+                style={{
+                  width: '132px',
+                  height: '46px',
+                }}
+              />
+            </SidebarItemNoHover>
+
+            <BlackDivider />
+            <SidebarItems />
+            <FooterSection>
+              <Black2Divider />
+              {[
+                { icon: CottageIcon, text: 'Home', onClick: () => navigate('/Courses') },
+                { icon: SettingsIcon, text: 'Settings' },
+                { icon: ExitToAppIcon, text: 'Logout', onClick: onLogout },
+              ].map((item, index) => (
+                <SidebarItemFooter key={index} onClick={item.onClick}>
+                  <SidebarIcon>
+                    <item.icon />
+                  </SidebarIcon>
+                  <Typography sx={{ fontFamily: "'Roboto', sans-serif" }} fontSize="0.9rem">
+                    {item.text}
+                  </Typography>
+                </SidebarItemFooter>
+              ))}
+            </FooterSection>
+          </>
+        ) : (
+          <Box sx={{ marginTop: 'auto' }}>
+            {[
+              { icon: CottageIcon, text: 'Home', onClick: () => navigate('/Courses') },
+              { icon: SettingsIcon, text: 'Settings' },
+              { icon: ExitToAppIcon, text: 'Logout', onClick: onLogout },
+            ].map((item, index) => (
+              <SidebarItem key={`footer-${index}`} onClick={item.onClick} sx={{ ml: '-3px', mb: '10px', gap: '3px' }}>
+                <SidebarIcon>
+                  <item.icon />
+                </SidebarIcon>
+              </SidebarItem>
+            ))}
+          </Box>
+        )}
+      </SidebarContainer>
+
+      {/* Show a loader in the main content area while course data is loading
+      {isLoading && (
+        <Box sx={{ flexGrow: 1, p: 3 }}>
+          <CircularProgress />
+        </Box>
+      )} */}
+    </Box>
+  );
+}
+
+
+--- src\Components\Sidebar2\SidebarItems2.js ---
+import React, { useState } from "react";
+import { Box, Typography, Stepper, Step, StepLabel, CircularProgress } from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "react-query";
+
+const VerticalConnector = () => (
+  <div
+    style={{
+      borderLeft: "2px solid #ccc",
+      height: "22px",
+      marginLeft: "20px",
+      my: "-10px",
+      opacity: "40%",
+    }}
+  />
+);
+const StepIconContainer = ({ children }) => (
+  <div style={{ display: "flex", alignItems: "center" }}>{children}</div>
+);
+const StepIcon = ({ active }) => (
+  <div
+    style={{
+      width: "10px",
+      height: "10px",
+      borderRadius: "50%",
+      backgroundColor: "#78BBFF",
+      opacity: active ? 1 : 0.4,
+    }}
+  />
+);
+const FadedDivider = () => (
+  <div style={{ borderBottom: "1px solid #ccc", margin: "10px 10px" }} />
+);
+
+// Define the fetch function for React Query.
+const fetchCourseData = async ({ signal }) => {
+  const authToken = localStorage.getItem("authToken");
+  if (!authToken) {
+    throw new Error("No auth token found.");
+  }
+  const response = await fetch(
+    "https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/",
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      signal,
+    }
+  );
+  if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+  const data = await response.json();
+  return data[0]; // Assuming the first course is needed.
+};
+
+const NavigationComponent = () => {
+  const [expanded, setExpanded] = useState(false);
+  const [activeStep, setActiveStep] = useState(null);
+  const navigate = useNavigate();
+
+  // Use React Query to fetch course data.
+  const { data: courseData, isLoading, error } = useQuery("courseData", fetchCourseData, {
+    staleTime: 5 * 60 * 1000, // Cache data for 5 minutes.
+  });
+
+  if (isLoading) return <CircularProgress />;
+  if (error || !courseData) return <Typography>Error loading course data.</Typography>;
+
+  const handleStepClick = (step) => {
+    setActiveStep(step);
+  };
+
+  return (
+    <Box
+      sx={{
+        maxHeight: "calc(100vh - 100px)",
+        overflowY: "auto",
+        pr: 2,
+        display: "flex",
+        flexDirection: "column",
+        "&::-webkit-scrollbar": { width: "8px" },
+        "&::-webkit-scrollbar-thumb": { backgroundColor: "#888", borderRadius: "4px" },
+        "&::-webkit-scrollbar-track": { backgroundColor: "#03162A" },
+        paddingBottom: "100px",
+      }}
+    >
+      {/* Course Name Clickable */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mt: 2,
+          cursor: "pointer",
+          px: "12px",
+          gap: "12px",
+        }}
+        onClick={() => setExpanded(!expanded)}
+      >
+        {expanded ? <ExpandLess /> : <ExpandMore />}
+        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "18px", cursor: "pointer" }}>
+          {courseData.course?.name || "No Course Name"}
+        </Typography>
+      </Box>
+      <FadedDivider />
+
+      {expanded && (
+        <Stepper orientation="vertical" connector={<VerticalConnector />}>
+          {/* Subjects */}
+          {courseData.subjects?.map((subject, index) => (
+            <Step sx={{ mb: "-10px" }} key={index} onClick={() => handleStepClick(subject.name)}>
+              <StepLabel
+                StepIconComponent={({ active }) => (
+                  <StepIconContainer>
+                    <StepIcon active={activeStep === subject.name} />
+                  </StepIconContainer>
+                )}
+                sx={{
+                  cursor: "pointer",
+                  paddingLeft: "16px",
+                  "& .MuiStepLabel-label": {
+                    fontWeight: activeStep === subject.name ? "600" : "400",
+                    fontSize: "15px",
+                    color: activeStep === subject.name ? "white" : "#ccc",
+                  },
+                }}
+              >
+                {subject.name}
+              </StepLabel>
+            </Step>
+          ))}
+
+          {/* Direct Content */}
+          {["videos", "quizzes", "reading_materials"].map(
+            (contentType, index) =>
+              courseData.direct_content?.[contentType]?.length > 0 && (
+                <Step
+                  sx={{ my: "-10px", cursor: "pointer" }}
+                  key={index}
+                  onClick={() => {
+                    if (contentType === "quizzes") {
+                      setActiveStep("quizzes");
+                      navigate("/dashboard");
+                    } else {
+                      handleStepClick(contentType);
+                    }
+                  }}
+                >
+                  <StepLabel
+                    StepIconComponent={({ active }) => (
+                      <StepIconContainer>
+                        <StepIcon active={activeStep === contentType} />
+                      </StepIconContainer>
+                    )}
+                    sx={{
+                      cursor: "pointer",
+                      paddingLeft: "16px",
+                      "& .MuiStepLabel-label": {
+                        fontWeight: activeStep === contentType ? "600" : "400",
+                        fontSize: "15px",
+                        color: activeStep === contentType ? "white" : "black",
+                      },
+                    }}
+                  >
+                    {courseData.direct_content[contentType][0]?.title || "No Data"}
+                  </StepLabel>
+                </Step>
+              )
+          )}
+
+          {/* Sections */}
+          {courseData.sections?.map((section, index) => (
+            <Step sx={{ my: "-10px" }} key={index} onClick={() => handleStepClick(section.title)}>
+              <StepLabel
+                StepIconComponent={({ active }) => (
+                  <StepIconContainer>
+                    <StepIcon active={activeStep === section.title} />
+                  </StepIconContainer>
+                )}
+                sx={{
+                  paddingLeft: "16px",
+                  "& .MuiStepLabel-label": {
+                    fontWeight: activeStep === section.title ? "600" : "400",
+                    fontSize: "15px",
+                    color: activeStep === section.title ? "white" : "black",
+                  },
+                }}
+              >
+                {section.title}
+              </StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      )}
+    </Box>
+  );
+};
+
+export default NavigationComponent;
+
+
+--- src\Components\SingleCourse\SingleCourse.js ---
+import * as React from 'react';
+import { useState , useEffect} from "react";
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import Typography from '@mui/material/Typography';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
+import NotesIcon from '@mui/icons-material/Notes';
+import QuizIcon from '@mui/icons-material/Quiz';
+import { Collapse, List, ListItem, ListItemText, Box, Divider, ListItemIcon } from "@mui/material";
+import { styled } from '@mui/material/styles';
+import FolderIcon from "@mui/icons-material/Folder"; // Example icon, replace as needed
+import { useNavigate } from "react-router-dom";
+
+const BlackDivider = styled(Divider)(({ theme }) => ({
+    background: 'black',
+    height: '0.1px',
+    margin: theme.spacing(1, 0),
+    boxShadow: '0 2px 4px rgba(255, 255, 255, 0.79)',
+    
+}));
+
+
+
+export default function AccordionUsage({ courseData , quizId}) {
+    const [activeIndex, setActiveIndex] = useState(null); // Lifted state up
+    const navigate = useNavigate();
+    console.log("courseData:", courseData); // Debugging
+    const handleQuizClick = () => {
+        // Redirect to /dashboard and pass the quizId via state (or you can use query params)
+        navigate("/dashboard", { state: { quizId } });
+      };
+    
+  
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          borderRadius: 8,
+          flexDirection: "column",
+          "& .MuiAccordion-root": { margin: 0 },
+        }}
+      >
+        <Accordion
+          sx={{
+            backgroundColor: "#063565",
+            ":last-child": { borderBottomLeftRadius: "8px", borderBottomRightRadius: "8px" },
+            ":first-child": { borderTopRightRadius: "8px", borderTopLeftRadius: "8px" },
+          }}
+          disableGutters
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {/* ✅ Fixing subjects display */}
+              <Typography sx={{ color: "white" }}>
+                {courseData.subjects?.[0]?.name || "No Subject"}
+              </Typography>
+            </Box>
+          </AccordionSummary>
+                    {/* {quarter.chapters.length > 0 && ( */}
+                        <AccordionDetails sx={{
+                            display: 'flex',
+                            backgroundColor: '#EEF0F2',
+                            flexDirection: 'column',
+                            gap: '8px',
+                            py: '16px',
+                            borderLeft: '4px solid black'
+                        }}>
+                            {/* {quarter.chapters.map((chapter, cIndex) => ( */}
+                                <Box >
+                                    <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <PlayCircleFilledIcon />
+                                        {courseData.direct_content.videos?.[0]?.title || "No Subject"}
+                                    </Typography>
+                                    <BlackDivider />
+                                    <CollapsibleOutline chapter={courseData.sections?.[0]} activeIndex={activeIndex} setActiveIndex={setActiveIndex} />
+                                    <BlackDivider />
+                                   <Box onClick={handleQuizClick} sx={{ cursor: "pointer" }}>
+              <Typography sx={{ display: 'flex', gap: '8px' }}>
+                <QuizIcon /> {courseData.direct_content.quizzes?.[0]?.title || "No Subject"}
+              </Typography>
+            </Box>
+                                    <BlackDivider />
+                                    <Typography sx={{ display: 'flex', gap: '8px' }}>
+                                    <NotesIcon />{courseData.direct_content.readingMaterial?.[0]?.title || "No Notes"}
+                                    </Typography>
+                                </Box>
+                        
+                        </AccordionDetails>
+                    
+                </Accordion>
+            
+        </Box>
+    );
+}
+
+const CollapsibleOutline = ({ chapter, activeIndex, setActiveIndex }) => {
+    const [open, setOpen] = useState(false);
+
+    return (
+       <Box>
+            <Typography
+                sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}
+                onClick={() => setOpen(!open)}
+            >
+                <ExpandMoreIcon sx={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "0.3s" }} />
+                {chapter?.title || "Untitled Section"} {/* Handle undefined title */}
+            </Typography>
+
+            <Collapse in={open} timeout="auto" unmountOnExit>
+                <List>
+                    {(chapter?.sub_sections || []).map((subsection, index) => {  // Ensure subsections is an array
+                        const isActive = activeIndex === index;
+
+                        return (
+                            <ListItem
+                                key={index}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '4px',
+                                    position: 'relative',
+                                    pl: '32px',
+                                    cursor: 'pointer',
+                                    color: isActive ? '#FFFFFF' : '#A0A0A0',
+                                    backgroundColor: isActive ? '#28527A' : 'transparent',
+                                    borderRadius: '6px',
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&::before': chapter?.subsections?.length > 1 ? { // Only show when multiple subsections exist
+                                        content: '""',
+                                        position: 'absolute',
+                                        left: '18px',
+                                        top: index === 0 ? '45%' : 0,
+                                        bottom: index === chapter.subsections.length - 1 ? '50%' : 0,
+                                        width: '2px',
+                                        backgroundColor: '#78BBFF',
+                                        opacity: '40%',
+                                    } : {},
+                                }}
+                                onClick={() => setActiveIndex(index)}
+                            >
+                                {/* Step Icon (Dot) */}
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        left: '14px',
+                                        top: '38%',
+                                        width: isActive ? '12px' : '10px',
+                                        height: isActive ? '12px' : '10px',
+                                        borderRadius: '50%',
+                                        backgroundColor: '#78BBFF',
+                                        opacity: 1,
+                                        transition: 'all 0.2s ease-in-out',
+                                    }}
+                                />
+
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <ListItemIcon sx={{ minWidth: 'unset', color: isActive ? '#FFFFFF' : '#A0A0A0' }}>
+                                        {subsection?.icon || <FolderIcon />} {/* Default icon */}
+                                    </ListItemIcon>
+                                    <ListItemText primary={subsection?.title || "Untitled Subsection"} />
+                                </Box>
+                            </ListItem>
+                        );
+                    })}
+                </List>
+            </Collapse>
+        </Box>
+    );
+};
+
+--- src\Components\SingleCourse\SingleCourseDesk.js ---
+import React from "react";
+import { Card, CardContent, Typography, Avatar, Box, CircularProgress } from "@mui/material";
+import AccordionUsage from "./SingleCourse";
+import { useLocation } from "react-router-dom";
+import { useQuery } from "react-query";
+
+const SingleCourseCard = () => {
+  const location = useLocation();
+  const courseId = location.state?.courseId;
+
+  const fetchCourseData = async () => {
+    if (!courseId) {
+      throw new Error("No course id provided.");
+    }
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) {
+      throw new Error("No auth token found.");
+    }
+    const response = await fetch(`https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/?id=${courseId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data[0]; // Assuming the first course is the one needed.
+  };
+
+  const { data: courseData, error, isLoading } = useQuery(['course', courseId], fetchCourseData, {
+    enabled: !!courseId, // Only run if courseId exists.
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes.
+  });
+
+  if (isLoading) {
+    return <CircularProgress />;
+  }
+  if (error || !courseData) {
+    return <Typography>Error loading course data.</Typography>;
+  }
+
+  const quizId =
+    courseData.direct_content &&
+    courseData.direct_content.quizzes &&
+    courseData.direct_content.quizzes.length > 0
+      ? courseData.direct_content.quizzes[0].id
+      : null;
+
+  return (
+    <Card
+      sx={{
+        maxWidth: "670px",
+        width: "fit-content",
+        borderRadius: 2,
+        boxShadow: 3,
+        boxSizing: "border-box",
+        padding: "16px",
+      }}
+    >
+      {/* Course Image Placeholder */}
+      <Box sx={{ height: 290, bgcolor: "#001F3F", borderRadius: 2 }} />
+
+      {/* Course Details */}
+      <CardContent sx={{ paddingX: "0" }}>
+        <Typography variant="h5" fontWeight="bold">
+          {courseData.course.name}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mt={2}>
+          {courseData.course.description}
+        </Typography>
+
+        {/* Instructor Info */}
+        <Box display="flex" alignItems="center" mt={2}>
+          <Avatar sx={{ bgcolor: "green" }}>B</Avatar>
+          <Typography variant="body1" sx={{ ml: 1 }}>
+            <strong>Instructor:</strong> <span style={{ color: "black" }}>Brooklyn Simmons</span>
+          </Typography>
+        </Box>
+      </CardContent>
+
+      {/* Course Includes Section */}
+      <Typography variant="h6" fontWeight="bold">
+        The Course Includes:
+      </Typography>
+      <Box>
+        <AccordionUsage courseData={courseData} quizId={quizId} />
+      </Box>
+    </Card>
+  );
+};
+
+export default SingleCourseCard;
+
+
+--- src\Components\Stepper.js ---
+import React from 'react';
+import { styled } from '@mui/material/styles';
+import { Box, Typography } from '@mui/material';
+
+const StepperContainer = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(3),
+  position: 'relative',
+}));
+
+const StepperItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  position: 'relative',
+  marginBottom: theme.spacing(4),
+  '&:last-child': {
+    marginBottom: 0,
+    '&:before': {
+      display: 'none',
+    }
+  },
+  '&:before': {
+    content: '""',
+    position: 'absolute',
+    left: '15px',
+    top: '28px',
+    bottom: 0,
+    width: '2px',
+    backgroundColor: '#4a90e2',
+  }
+}));
+
+const StepperDot = styled(Box)(({ theme }) => ({
+  width: '16px',
+  height: '16px',
+  borderRadius: '50%',
+  backgroundColor: '#4a90e2',
+  marginRight: theme.spacing(2),
+  position: 'relative',
+  zIndex: 2,
+}));
+
+const StepperContent = styled(Box)(({ theme }) => ({
+  flexGrow: 1,
+}));
+
+export default function ContentStepper() {
+  const steps = [
+    'MDCAT English Video',
+    'MDCAT English Quiz',
+    'MDCAT English Blog'
+  ];
+
+  return (
+    <StepperContainer>
+      {steps.map((step, index) => (
+        <StepperItem key={index}>
+          <StepperDot />
+          <StepperContent>
+            <Typography variant="h6" component="div" sx={{ 
+              color: '#ffffff',
+              fontSize: '1.1rem',
+              fontWeight: 500,
+              marginLeft: '20px'
+            }}>
+              {step}
+            </Typography>
+          </StepperContent>
+        </StepperItem>
+      ))}
+    </StepperContainer>
+  );
+}
+
+--- src\Components\ThemeProvider.js ---
+import { createTheme } from '@mui/material/styles';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      light: '#e3f2fd',    // Light blue for backgrounds
+      main: '#2196f3',     // Medium blue
+      dark: '#1976d2',     // Dark blue for buttons
+      lighter: '#f5fbff'   // Very light blue for secondary button
+    },
+    // ... other palette configurations
+  },
+  // ... other theme customizations
+});
+
+export default theme;
+
+--- src\Components\Videopage\Videopage.js ---
+import React from 'react'
+import { Box, Typography, Paper, Button, Grid, Checkbox } from "@mui/material";
+import { PrimaryButton, SecondaryButton } from '../Buttons/Buttons'
+import img from '../../Assets/neuron.jpg'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+function Videopage() {
+  return (
+    <>
+    <Box
+            sx={{
+              display: 'flex',
+              flexDirection:'column',
+              // border:'1px solid black',
+              gap: '16px',
+              padding:'16px',
+              borderRadius:5,
+              width:{xs:'100%', sm:'fit-content'},
+              backgroundColor:'white',
+              height:'fit-content',
+              overflowX:'hidden',
+              
+            }}
+          >
+            <Typography sx={{
+              fontSize:'36px',
+               fontWeight:'900',
+               lineHeight:'120%',
+            
+            }} >
+                       Heading 1 
+            </Typography>
+            <Box
+      sx={{
+        position: 'relative', // Required for absolute positioning of the overlay
+      
+        height: {xs:'208px' , sm:'367px'},
+        borderRadius: 2,
+        boxShadow: 5,
+        overflow: 'hidden', // Ensures the overlay respects the border radius
+      }}
+    >
+      {/* Image */}
+      <Box
+        component="img"
+        src={img} // Fetch image from questions array
+        sx={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block',
+        }}
+      />
+
+      {/* Overlay */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.56)', // 56% opacity black
+          borderRadius: 2, // Match the image's border radius
+          zIndex: 1, // Ensure the overlay is above the image but below the icon
+        }}
+      />
+
+      {/* Play Icon */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '40%',
+          left: '42%',
+          zIndex: 2, // Ensure the icon is above the overlay
+          color: 'white', // Icon color
+        }}
+      >
+        <PlayArrowIcon
+          sx={{
+            width: '80px',
+            height: '70px',
+          }}
+        />
+      </Box>
+    </Box>
+
+       <Box sx={{
+        width:{xs:'fit-content', sm:'654px'},
+        mt:'-10px',
+        mb:{xs:'150px', sm:'40px'}
+
+       }}>
+        <Typography sx={{
+          color:'#7F8184'
+        }}>
+            Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend. Helo how are you my dear friend.
+        </Typography>
+       </Box>
+
+        <Box sx={{ display: 'flex', gap: '8px', justifyContent: 'center', width: '100%'}}>
+                 <SecondaryButton variant="contained" >Back</SecondaryButton>
+                 <PrimaryButton variant="contained" >Next</PrimaryButton>
+               </Box>
+                             </Box>
+                             </>
+  )
+}
+
+export default Videopage
+
+
+--- src\index.css ---
+* {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+
+--- src\index.js ---
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import Desk from './Components/Authorization/Desk';
+import { BrowserRouter } from "react-router-dom";
+import App from './App';
+import AppRoutes from './AppRoutes';
+import { QueryClient, QueryClientProvider } from 'react-query';
+const queryClient = new QueryClient();
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <BrowserRouter>
+  <QueryClientProvider client={queryClient}>
+    <Desk />
+    </QueryClientProvider>
+  </BrowserRouter>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+
+
+

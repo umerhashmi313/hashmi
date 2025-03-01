@@ -8,39 +8,39 @@ export const navigationData = {
     Navigation: {
         Students: {
             Dashboard: {
-                url: '/dashboard',
+                url: '/courses',
                 icon: DashboardIcon
             },
-            Page: {
-                url: 'www.page',
-                icon: PagesIcon
-            },
-            Courses: {
-                url: '/courses',
-                icon: SchoolIcon
-            },
+            // Page: {
+            //     url: 'www.page',
+            //     icon: PagesIcon
+            // },
+            // Courses: {
+            //     url: '/courses',
+            //     icon: SchoolIcon
+            // },
             Announcements: {
                 url: 'www.Permanent',
                 icon: AnnouncementIcon
             }
         },
-        Instructor: {
-            Dashboard: {
-                url: '',
-                icon: DashboardIcon
-            },
-            Page: {
-                url: '',
-                icon: PagesIcon
-            },
-            Courses: {
-                url: '',
-                icon: SchoolIcon
-            },
-            Announcements: {
-                url: '',
-                icon: AnnouncementIcon
-            }
-        }
+        // Instructor: {
+        //     Dashboard: {
+        //         url: '',
+        //         icon: DashboardIcon
+        //     },
+        //     Page: {
+        //         url: '',
+        //         icon: PagesIcon
+        //     },
+        //     Courses: {
+        //         url: '',
+        //         icon: SchoolIcon
+        //     },
+        //     Announcements: {
+        //         url: '',
+        //         icon: AnnouncementIcon
+        //     }
+        // }
     }
 };
