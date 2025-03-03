@@ -173,11 +173,14 @@ function QuizHeader({ onOptionSelect }) {
 
   // Determine background color for the main question container.
   const mainContainerBg =
-    filteredQuestions[currentQuestionIndex]?.isCorrect === false
-      ? "#FFC5C6"
-      : isReviewMode
-      ? "yellow"
-      : "white";
+  filteredQuestions[currentQuestionIndex]?.isCorrect === false
+    ? "#FFC5C6"
+    : filteredQuestions[currentQuestionIndex]?.isCorrect === true
+    ? "#BFF0E9"
+    : isReviewMode
+    ? "yellow"
+    : "white";
+
 
   if (isLoading) return <p>Loading quiz attempt data...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -195,6 +198,28 @@ function QuizHeader({ onOptionSelect }) {
         padding: { xs: "0px", sm: "16px" },
       }}
     >
+      <Box sx={{
+        width:'100%'
+      }}>
+      <Box sx={{
+        backgroundColor:'#03162A',
+        width:'100%',
+        display:'flex',
+        pt:'16px',
+         pb:'16px',
+         pl:'16px',
+         pr:'0px',
+         boxSizing:'border-box'
+      }}>
+        <Typography sx={{
+          fontSize:'24px',
+          color:'white',
+          fontWeight:600,
+          lineHeight:'20px'
+        }}>
+          Quiz Results
+        </Typography>
+      </Box>
       {/* Header with score and attempt time */}
       <Box
         sx={{
@@ -431,6 +456,7 @@ function QuizHeader({ onOptionSelect }) {
           </FormControl>
         </Box>
       </Box>
+      </Box>
 
       {/* Main Question Display */}
       <Box
@@ -461,14 +487,14 @@ function QuizHeader({ onOptionSelect }) {
             </Typography>
             <TourIcon sx={{ color: "#E1004D" }} />
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <GradeSharpIcon sx={{ height: "21px", color: "yellow" }} />
             <Typography sx={{ fontWeight: "800", fontSize: "18px" }}>·</Typography>
             <Typography sx={{ fontWeight: "600", fontSize: "14px" }}>
               Review
               <Switch checked={isReviewMode} onChange={handleReviewToggle} />
             </Typography>
-          </Box>
+          </Box> */}
         </Box>
 
         <Box

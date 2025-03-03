@@ -227,7 +227,7 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
       <Box
         sx={{
           borderRadius: 3,
-          backgroundColor: isReviewMode ? '' : 'white',
+          backgroundColor: isReviewMode ? '#90D8FF' : 'white',
           gap: '32px',
           padding: '16px',
           boxSizing: 'border-box',
@@ -257,7 +257,7 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
               <Typography sx={{ fontWeight: '800', fontSize: '18px' }}>·</Typography>
               <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
                 Review
-                <Switch checked={isReviewMode} onChange={handleReviewToggle} />
+                <Switch checked={isReviewMode} onChange={handleReviewToggle} sx={{color: 'yellow' }} />
               </Typography>
             </Box>
           </Box>

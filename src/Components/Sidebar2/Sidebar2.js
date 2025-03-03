@@ -8,16 +8,19 @@ import SidebarItems from './SidebarItems2';
 import CottageIcon from '@mui/icons-material/Cottage';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
+import LogoImage from '../../Assets/logo.svg';
 
 const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
   backgroundColor: '#03162A',
   color: '#ffffff',
   height: '100vh',
   width: sidebarOpen ? '250px' : '60px',
+  
   transition: 'width 0.3s ease',
   display: 'flex',
   flexDirection: 'column',
   overflowX: 'hidden',
+  boxSizing:'border-box'
 }));
 
 const SidebarToggle = styled(IconButton)(({ sidebarOpen }) => ({
@@ -132,7 +135,7 @@ export default function Sidebar2({ sidebarOpen, toggleSidebar, onLogout , select
   }
 
   return (
-    <Box display="flex">
+   
       <SidebarContainer sidebarOpen={sidebarOpen}>
         <SidebarToggle sidebarOpen={sidebarOpen} onClick={toggleSidebar}>
           {sidebarOpen ? <RiMenuFold3Fill /> : <RiMenuUnfold3Fill />}
@@ -200,12 +203,6 @@ export default function Sidebar2({ sidebarOpen, toggleSidebar, onLogout , select
         )}
       </SidebarContainer>
 
-      {/* Show a loader in the main content area while course data is loading
-      {isLoading && (
-        <Box sx={{ flexGrow: 1, p: 3 }}>
-          <CircularProgress />
-        </Box>
-      )} */}
-    </Box>
+   
   );
 }

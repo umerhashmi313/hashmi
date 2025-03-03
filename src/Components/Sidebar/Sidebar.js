@@ -14,7 +14,7 @@ const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
   backgroundColor: '#03162A',
   color: '#ffffff',
   height: '100vh',
-  width: sidebarOpen ? '235px' : '60px',
+  width: sidebarOpen ? '260px' : '60px',
   transition: 'width 0.3s ease',
   display: 'flex',
   flexDirection: 'column',
@@ -28,7 +28,7 @@ const SidebarContainer = styled(Box)(({ theme, sidebarOpen }) => ({
 const SidebarToggle = styled(IconButton)(({ sidebarOpen }) => ({
   position: 'fixed',
   top: '20px',
-  left: sidebarOpen ? 'calc(234px - 20px)' : '13px', // Adjusted right position
+    left: sidebarOpen ? 'calc(260px - 20px)' : '13px', // Adjusted right position
   backgroundColor: '#ffffff',
   color: '#000',
   borderRadius: '20%',
@@ -117,8 +117,7 @@ const SidebarItemFooter = styled(SidebarItem)(({ theme }) => ({
 
 export default function Sidebar({ sidebarOpen, toggleSidebar,  onLogout  }) {
   return (
-    <Box display="flex">
-      {/* Sidebar */}
+   
       <SidebarContainer sidebarOpen={sidebarOpen}>
         <SidebarToggle sidebarOpen={sidebarOpen} onClick={toggleSidebar}>
           {sidebarOpen ? <RiMenuFold3Fill /> : <RiMenuUnfold3Fill />}
@@ -193,7 +192,7 @@ export default function Sidebar({ sidebarOpen, toggleSidebar,  onLogout  }) {
   </>
 )}
       </SidebarContainer>
-    </Box>
+  
 
   );
 }

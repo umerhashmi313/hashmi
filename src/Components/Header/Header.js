@@ -88,10 +88,10 @@ function Header({ onLogout }) {
       <Toolbar>
         <Typography
           variant="h5"
-          fontWeight="bold"
+          fontWeight='700'
           sx={{
             flexGrow: 1,
-            ml: '20px',
+            ml: '70px',
             fontSize: isSmallScreen ? '20px' : '30px',
           }}
         >

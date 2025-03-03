@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
   Box,
+  Typography,
   Divider,
   Collapse,
   List,
@@ -19,26 +16,25 @@ import QuizIcon from "@mui/icons-material/Quiz";
 import FolderIcon from "@mui/icons-material/Folder";
 import { styled } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "react-query";
 
-// Styled divider similar to your singlecourse component
+// Styled dividers similar to previous versions.
 const BlackDivider = styled(Divider)(({ theme }) => ({
   background: "black",
   height: "0.1px",
   margin: theme.spacing(1, 0),
   boxShadow: "0 2px 4px rgba(255, 255, 255, 0.79)",
 }));
-// Styled divider similar to your singlecourse component
+
 const GreenDivider = styled(Divider)(({ theme }) => ({
-  background: 'linear-gradient(to right, transparent,#239283, transparent)',
-  height: '1px',
+  background: "linear-gradient(to right, transparent,#239283, transparent)",
+  height: "1px",
   margin: theme.spacing(1, 2),
 }));
 
 /**
  * Recursively renders a chapter (section or final content).
- *
- * For final content items (video, quiz, etc.), if the optional index and arrLength
- * props are provided, the component renders the vertical connector line and dot.
+ * For sections, clicking the header toggles the collapse of its nested content.
  */
 const CollapsibleOutline = ({
   chapter,
@@ -46,22 +42,25 @@ const CollapsibleOutline = ({
   handleQuizClick,
   index,
   arrLength,
+  selectedItemId,
+  setSelectedItemId,
 }) => {
+  // For sections, use an open state to toggle nested content.
   const [open, setOpen] = useState(false);
-  // Local state to track if the item has been activated (clicked)
-  const [active, setActive] = useState(false);
   const children = chapter?.ordered_content || [];
   const hasChildren = children.length > 0;
   const isSection = chapter.type === "section";
 
-  // For final content items (video, quiz, etc.)
   if (!isSection) {
-    // Determine if the item is first or last among its siblings.
+    // Final content (video, quiz, etc.)
     const isFirst = typeof index === "number" && index === 0;
     const isLast =
       typeof index === "number" &&
       typeof arrLength === "number" &&
       index === arrLength - 1;
+
+    // Determine if this item is the active (selected) one.
+    const isActive = chapter.id === selectedItemId;
 
     return (
       <ListItem
@@ -69,13 +68,14 @@ const CollapsibleOutline = ({
           position: "relative",
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           padding: "4px",
           pl: "32px",
           cursor: "pointer",
         }}
         onClick={() => {
-          // Mark the item as active when clicked.
-          setActive(true);
+          // Set this item as active.
+          setSelectedItemId(chapter.id);
           if (chapter.type === "video") {
             handleVideoClick?.(chapter);
           } else if (chapter.type === "quiz") {
@@ -83,57 +83,71 @@ const CollapsibleOutline = ({
           }
         }}
       >
-        {/* Connector Line remains unchanged */}
+        {/* Connector line */}
         <Box
           sx={{
             position: "absolute",
-            left: "18px",
+            left: "20px",
             top: isFirst ? "calc(38% + 5px)" : 0,
             bottom: isLast ? "calc(100% - (38% + 5px))" : 0,
-            width: "2px",
+            width: "1px",
             backgroundColor: "#78BBFF",
             zIndex: 0,
           }}
         />
-        {/* Dot: color changes based on active state */}
+        {/* Dot */}
         <Box
           sx={{
             position: "absolute",
             left: "14px",
-            top: "38%",
-            width: "10px",
-            height: "10px",
+            top: "33%",
+            width: "12px",
+            height: "12px",
             borderRadius: "50%",
-            backgroundColor: active ? "#31CEB8" : "#15574D",
+            backgroundColor: isActive ? "#31CEB8" : "#15574D",
             zIndex: 1,
           }}
         />
-        <ListItemIcon sx={{ minWidth: "unset", mr: 1, color: "white" }}>
+        <ListItemIcon
+          sx={{
+            minWidth: "unset",
+            mr: 1,
+            ml: 1,
+            color: isActive ? "white" : "#8F9091",
+            fontSize: "16px",
+          }}
+        >
           {chapter.type === "video" ? (
-            <PlayCircleFilledIcon />
+            <PlayCircleFilledIcon sx={{ fontSize: "16px" }} />
           ) : chapter.type === "quiz" ? (
-            <QuizIcon />
+            <QuizIcon sx={{ fontSize: "16px" }} />
           ) : (
-            <FolderIcon />
+            <FolderIcon sx={{ fontSize: "16px" }} />
           )}
         </ListItemIcon>
-        <ListItemText primary={chapter.name || "Untitled"} />
+        <ListItemText
+          primary={chapter.name || "Untitled"}
+          primaryTypographyProps={{
+            sx: { fontSize: "12px", color: isActive ? "white" : "#8F9091" },
+          }}
+        />
       </ListItem>
     );
   }
 
-  // Render section/chapter titles for nested sections.
+  // For sections: clicking the header toggles the collapse of its children.
   return (
     <Box sx={{ mt: 1 }}>
       <Typography
+        onClick={() => hasChildren && setOpen((prev) => !prev)}
         sx={{
           display: "flex",
+          fontSize: "16px",
+          lineHeight: "140%",
+          fontWeight: "500",
           alignItems: "center",
           cursor: hasChildren ? "pointer" : "default",
           gap: "8px",
-        }}
-        onClick={() => {
-          if (hasChildren) setOpen(!open);
         }}
       >
         {hasChildren && (
@@ -148,72 +162,207 @@ const CollapsibleOutline = ({
       </Typography>
       {hasChildren && (
         <Collapse in={open} timeout="auto" unmountOnExit>
-          <GreenDivider />
-          <List disablePadding>
-            {children.map((child, idx, arr) => (
-              <React.Fragment key={child.id}>
-                <CollapsibleOutline
-                  chapter={child}
-                  handleVideoClick={handleVideoClick}
-                  handleQuizClick={handleQuizClick}
-                  index={idx}
-                  arrLength={arr.length}
-                />
-                {/* Divider between items */}
-                {/* <GreenDivider /> */}
-              </React.Fragment>
-            ))}
-          </List>
+          <Box>
+            <GreenDivider />
+            <List disablePadding>
+              {children.map((child, idx, arr) => (
+                <React.Fragment key={child.id}>
+                  <CollapsibleOutline
+                    chapter={child}
+                    handleVideoClick={handleVideoClick}
+                    handleQuizClick={handleQuizClick}
+                    index={idx}
+                    arrLength={arr.length}
+                    selectedItemId={selectedItemId}
+                    setSelectedItemId={setSelectedItemId}
+                  />
+                </React.Fragment>
+              ))}
+            </List>
+          </Box>
         </Collapse>
       )}
     </Box>
   );
 };
 
+/**
+ * Renders the header for a quarter.
+ */
+const QuarterHeaderBox = ({ quarter, isSelected, onClick }) => {
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        backgroundColor: isSelected ? "#239283" : "transparent",
+        color: "white",
+        width: "80%",
+        minHeight: "32px",
+        border: "3px solid #239283",
+        boxShadow: "0 0 7px 0 #239283",
+        margin: "8px 0",
+        borderRadius: "8px",
+        cursor: "pointer",
+        px: 2,
+        py: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <Typography
+        sx={{ fontSize: "18px", fontWeight: "500", lineHeight: "140%" }}
+      >
+        {quarter.name}
+      </Typography>
+      <ExpandMoreIcon
+        sx={{
+          color: "white",
+          transform: isSelected ? "rotate(180deg)" : "rotate(0deg)",
+          transition: "0.3s",
+        }}
+      />
+    </Box>
+  );
+};
 
+/**
+ * Renders the chapter content for a quarter inside its own box.
+ * The nested chapters inside this box are collapsible.
+ */
+const ChapterBox = ({
+  quarter,
+  handleVideoClick,
+  handleQuizClick,
+  selectedItemId,
+  setSelectedItemId,
+}) => {
+  return (
+    <Box
+      sx={{
+        width: "87%",
+        backgroundColor: "#03162A",
+        color: "white",
+        borderTop: "none",
+        borderBottom: "3px solid #239283",
+        borderRadius: "12px",
+        px: 1,
+        py: 1,
+        mt: "-2",
+        position: "relative",
+        transition: "all 0.5s ease",
+        overflow: "hidden", // ensures the gradient doesn't spill outside the box
+
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: "1px",
+          background: "linear-gradient(to top, #239283, transparent)",
+          zIndex: 1,
+        },
+        "&::after": {
+          content: '""',
+          position: "absolute",
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: "1px",
+          background: "linear-gradient(to top, #239283, transparent)",
+          zIndex: 1,
+        },
+      }}
+    >
+      <List disablePadding>
+        {quarter.ordered_content?.map((child, idx, arr) => (
+          <React.Fragment key={child.id}>
+            <CollapsibleOutline
+              chapter={child}
+              handleVideoClick={handleVideoClick}
+              handleQuizClick={handleQuizClick}
+              index={idx}
+              arrLength={arr.length}
+              selectedItemId={selectedItemId}
+              setSelectedItemId={setSelectedItemId}
+            />
+            <GreenDivider />
+          </React.Fragment>
+        ))}
+      </List>
+    </Box>
+  );
+};
+
+/**
+ * Combines the quarter header and its chapter content.
+ * When the header is clicked, the chapter content appears directly below that header.
+ */
+const QuarterAccordion = ({
+  quarter,
+  handleVideoClick,
+  handleQuizClick,
+  selectedItemId,
+  setSelectedItemId,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Box>
+      <QuarterHeaderBox
+        quarter={quarter}
+        isSelected={open}
+        onClick={() => setOpen((prev) => !prev)}
+      />
+      <Collapse in={open} timeout={600}>
+        <ChapterBox
+          quarter={quarter}
+          handleVideoClick={handleVideoClick}
+          handleQuizClick={handleQuizClick}
+          selectedItemId={selectedItemId}
+          setSelectedItemId={setSelectedItemId}
+        />
+      </Collapse>
+    </Box>
+  );
+};
 
 const AccordionNavigation = ({ selectedCourseId }) => {
-  const [courseData, setCourseData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedItemId, setSelectedItemId] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCourseData = async () => {
-      const authToken = localStorage.getItem("authToken");
-      if (!authToken) {
-        console.error("No auth token found.");
-        setLoading(false);
-        return;
+  // React Query: Fetch course data
+  const fetchCourseData = async () => {
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) {
+      throw new Error("No auth token found.");
+    }
+    const response = await fetch(
+      `https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/?id=${selectedCourseId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
       }
-      try {
-        const response = await fetch(
-          `https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/?id=${selectedCourseId}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
-        if (!response.ok)
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        const data = await response.json();
-        setCourseData(data[0]);
-      } catch (error) {
-        console.error("Error fetching course data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCourseData();
-  }, [selectedCourseId]);
+    );
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    const data = await response.json();
+    return data[0];
+  };
 
-  if (loading) return <CircularProgress />;
-  if (!courseData)
+  const { data: courseData, isLoading, error } = useQuery(
+    ["courseData", selectedCourseId],
+    fetchCourseData
+  );
+
+  if (isLoading) return <CircularProgress />;
+  if (error || !courseData)
     return <Typography>Error loading course data.</Typography>;
 
-  // Adjust this to match your actual data structure.
+  // Adjust based on your data structure.
   const topLevelContent = courseData.sections?.[0]?.ordered_content || [];
 
   const handleVideoClick = (video) => {
@@ -227,97 +376,30 @@ const AccordionNavigation = ({ selectedCourseId }) => {
   return (
     <Box
       sx={{
+        overflowX: "hidden",
+        overflowY: "scroll",
         width: "100%",
         display: "flex",
         flexDirection: "column",
-        p:'8px',
-        // gap:'12px',
+        px: "8px",
+        "&::-webkit-scrollbar": {
+          width: "12px",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "red",
+          borderRadius: "6px",
+        },
       }}
     >
       {topLevelContent.map((quarter) => (
-        <Accordion
+        <QuarterAccordion
           key={quarter.id}
-          sx={{
-            backgroundColor: "transparent",
-            // When expanded, change the background color
-            "&.Mui-expanded": {
-              backgroundColor: "#239283",
-            },
-            // (Optional) Smooth transition
-            transition: "background-color 0.3s",
-            color: "white",
-            width:'230px',
-            height:'45px',
-            border:'3px solid #239283',  
-            boxShadow: "0 0 7px 0 #239283",
-            margin: "8px 0",
-            borderRadius: "8px", // Set your desired radius here
-            // overflow: "hidden",  // Ensures inner content respects the border radius
-            "&:first-of-type": {
-              borderTopLeftRadius: "8px",
-              borderTopRightRadius: "8px",
-            },
-            // Last child: add bottom corners radius
-            "&:last-of-type": {
-              borderBottomLeftRadius: "8px",
-              borderBottomRightRadius: "8px",
-            },
-  
-          }}
-          disableGutters
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
-          >
-            <Typography sx={{
-              fontSize:'18px',
-              fontWeight:'500',
-              lineHeight:'140%'
-            }}>{quarter.name}</Typography>
-          </AccordionSummary>
-          <AccordionDetails
-  sx={{
-    position: "relative", // necessary for pseudo-elements to position relative to this container
-    display: "flex",
-    flexDirection: "column",
-    color: "white",
-    backgroundColor: "transparent",
-    borderBottom: "3px solid #239283", // keep bottom border as is
-    // Remove default left/right borders and add gradient via pseudo-elements
-    "&::before": {
-      content: '""',
-      position: "absolute",
-      top: 0,
-      bottom: 0,
-      left: 0,
-      width: "2px",
-      background: "linear-gradient(to top, #239283, transparent)",
-    },
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      top: 0,
-      bottom: 0,
-      right: 0,
-      width: "3px",
-      background: "linear-gradient(to top, #239283, transparent)",
-    },
-  }}
->
-            {quarter.ordered_content?.map((child, idx, arr) => (
-              <React.Fragment key={child.id}>
-                <CollapsibleOutline
-                  chapter={child}
-                  handleVideoClick={handleVideoClick}
-                  handleQuizClick={handleQuizClick}
-                  index={idx}
-                  arrLength={arr.length}
-                />
-                <GreenDivider />
-              </React.Fragment>
-            ))}
-          </AccordionDetails>
-        </Accordion>
+          quarter={quarter}
+          handleVideoClick={handleVideoClick}
+          handleQuizClick={handleQuizClick}
+          selectedItemId={selectedItemId}
+          setSelectedItemId={setSelectedItemId}
+        />
       ))}
     </Box>
   );

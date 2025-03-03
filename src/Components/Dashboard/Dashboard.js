@@ -164,6 +164,7 @@ export default function ScholarshipCard() {
         sx={{
           maxWidth: { sm: "686px", xs: "100%" },
           width: "100%",
+     
           mx: "auto",
           p: "16px",
           backgroundColor: "white",
@@ -191,8 +192,8 @@ export default function ScholarshipCard() {
         mx: "auto",
         p: "16px",
         backgroundColor: "white",
-        borderRadius: "12px",
-        boxShadow: 5,
+        borderRadius: "18px",
+        boxShadow: 10,
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -280,7 +281,7 @@ export default function ScholarshipCard() {
         </PrimaryButton>
 
         <SecondaryButton
-          sx={{ width: "95%" }}
+          sx={{ width: "95%"  ,}}
           variant="contained"
           onClick={handleViewPreviousResult}
         >

@@ -88,7 +88,7 @@ function CourseCard({ course , onSelectCourse }) {
           <Button
             variant="outlined"
             sx={{
-              height: "22px",
+              height: "fit-content",
               fontSize: "8px",
               borderRadius: "16px",
               color: "black",
@@ -99,7 +99,7 @@ function CourseCard({ course , onSelectCourse }) {
           <Button
             variant="outlined"
             sx={{
-              height: "22px",
+              height: "fit-content",
               fontSize: "8px",
               borderRadius: "16px",
               color: "black",
@@ -110,7 +110,7 @@ function CourseCard({ course , onSelectCourse }) {
           <Button
             variant="outlined"
             sx={{
-              height: "22px",
+              height: "fit-content",
               fontSize: "8px",
               borderRadius: "16px",
               color: "black",

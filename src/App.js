@@ -41,9 +41,11 @@ export default function App({ onLogout }) {
           top: 0,
           left: 0,
           zIndex: 1200,
-          display: { xs: 'none', sm: 'block' },
+          display: { xs: 'none', sm: 'flex' },
           flexShrink: 0,
           transition: 'width 0.3s ease',
+        
+          // minWidth: 'fit-content'
         }}
       >
         {showSidebar2 ? (
@@ -129,10 +131,25 @@ export default function App({ onLogout }) {
                   display: { xs: 'none', sm: 'flex' },
                   gap: '8px',
                   padding: '16px',
+                 ml:'40px',
+                  mt:'-120px'
+                }}
+              >
+                   <Routes>
+                  <Route path="/Dashboard" element={<ProtectedRoute element={<ScholarshipCard  />} />} />
+                  </Routes>
+                 </Box>
+              <Box
+                sx={{
+                  minWidth: 0,
+                  display: { xs: 'none', sm: 'flex' },
+                  gap: '8px',
+                  padding: '16px',
+             
                 }}
               >
                 <Routes>
-                  <Route path="/Dashboard" element={<ProtectedRoute element={<ScholarshipCard />} />} />
+                
                   <Route path="/courses"  element={<ProtectedRoute element={<CourseList onSelectCourse={setSelectedCourseId} />} />} />
                   <Route path="/questions" element={<ProtectedRoute element={<TopQuestions />} />} />
                   <Route path="/coursesDetail" element={<ProtectedRoute element={<Courses />} />} />
