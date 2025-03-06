@@ -5,7 +5,6 @@ import { PrimaryButton, SecondaryButton } from "../Buttons/Buttons";
 import { dashboardData } from "./DemoMain"; // For icons and static text
 import "./Main.css";
 import { useQuery } from "react-query";
-import QuizAttempts from '../Quiz/QuizHeaderSolved'
 
 const StatCard = styled(Box)(({ theme }) => ({
   backgroundColor: "#EAFAF8",
@@ -143,14 +142,11 @@ export default function ScholarshipCard() {
   ];
 
   // Handler for "View Previous Result"
-  const handleViewPreviousResult = () => {
-    setShowPreviousResult(true);
-  };
+// In your button click handler:
+const handleViewPreviousResult = () => {
+  navigate("/questionssolved", { state: { quizId } });
+};
 
-  // If showPreviousResult is true, render the QuizAttempts (QuizHeaderSolved) component.
-  if (showPreviousResult) {
-    return <QuizAttempts />;
-  }
 
  
   // Show the skeleton while loading.

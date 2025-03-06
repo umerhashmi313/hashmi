@@ -180,7 +180,7 @@ export default function AccordionUsage({ courseData }) {
   const navigate = useNavigate();
 
   const handleQuizClick = (quiz) => {
-    navigate("/dashboard", { state: { quizId: quiz.id } });
+    navigate("/quiz", { state: { quizId: quiz.id } });
   };
 
   const handleVideoClick = (video) => {

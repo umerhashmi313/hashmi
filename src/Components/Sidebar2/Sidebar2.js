@@ -90,6 +90,7 @@ const Black2Divider = styled(Divider)(({ theme }) => ({
 const FooterSection = styled(Box)(({ theme }) => ({
   marginTop: 'auto',
   display: 'flex',
+  marginLeft:'-15px',
   flexDirection: 'column',
   paddingBottom: theme.spacing(1),
   backgroundColor: '#03162A',
@@ -171,7 +172,7 @@ export default function Sidebar2({ sidebarOpen, toggleSidebar, onLogout , select
             <FooterSection>
               <Black2Divider />
               {[
-                { icon: CottageIcon, text: 'Home', onClick: () => navigate('/Courses') },
+                { icon: CottageIcon, text: 'Home', onClick: () => navigate('/dashboard') },
                 { icon: SettingsIcon, text: 'Settings' },
                 { icon: ExitToAppIcon, text: 'Logout', onClick: onLogout },
               ].map((item, index) => (
@@ -179,7 +180,7 @@ export default function Sidebar2({ sidebarOpen, toggleSidebar, onLogout , select
                   <SidebarIcon>
                     <item.icon />
                   </SidebarIcon>
-                  <Typography sx={{ fontFamily: "'Roboto', sans-serif" }} fontSize="0.9rem">
+                  <Typography sx={{   fontSize:'14px', fontWeight:400 , lineHeight:'16px' }} >
                     {item.text}
                   </Typography>
                 </SidebarItemFooter>
@@ -189,7 +190,7 @@ export default function Sidebar2({ sidebarOpen, toggleSidebar, onLogout , select
         ) : (
           <Box sx={{ marginTop: 'auto' }}>
             {[
-              { icon: CottageIcon, text: 'Home', onClick: () => navigate('/Courses') },
+              { icon: CottageIcon, text: 'Home', onClick: () => navigate('/dashboard') },
               { icon: SettingsIcon, text: 'Settings' },
               { icon: ExitToAppIcon, text: 'Logout', onClick: onLogout },
             ].map((item, index) => (

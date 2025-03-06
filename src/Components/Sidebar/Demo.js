@@ -8,7 +8,7 @@ export const navigationData = {
     Navigation: {
         Students: {
             Dashboard: {
-                url: '/courses',
+                url: '/dashboard',
                 icon: DashboardIcon
             },
             // Page: {

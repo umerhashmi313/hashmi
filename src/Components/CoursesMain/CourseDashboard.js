@@ -3,7 +3,7 @@ import CourseCard from "./CourseCard";
 import { Box, Typography, Chip } from "@mui/material";
 import { useQuery } from "react-query";
 
-export default function CourseList({onSelectCourse}) {
+export default function CourseList({}) {
   const fetchCourses = async () => {
     const storedToken = localStorage.getItem("authToken");
     if (!storedToken) {
@@ -38,7 +38,7 @@ export default function CourseList({onSelectCourse}) {
         backgroundColor: "white",
         borderRadius: 3,
         boxShadow: 3,
-        width: "100%",
+        width: {sm:"fit-content" , xs:'100%'},
       }}
     >
       {/* Header Section */}
@@ -69,13 +69,13 @@ export default function CourseList({onSelectCourse}) {
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr", // Single column on small screens
-            sm: "repeat(2, 1fr)",
+            sm:  '1fr',
           },
           gap: "16px",
         }}
       >
         {courses.map((course) => (
-          <CourseCard key={course.id} course={course} onSelectCourse={onSelectCourse} />
+          <CourseCard key={course.id} course={course}/>
         ))}
       </Box>
     </Box>

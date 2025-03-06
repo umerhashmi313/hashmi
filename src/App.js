@@ -7,8 +7,8 @@ import Sidebar2 from './Components/Sidebar2/Sidebar2';
 import Nav from './Components/MobileNav/Nav';
 import ProtectedRoute from './Components/ProtectedRoutes/ProtectedRoutes';
 import './App.css';
-import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import QuizHeader from './Components/Quiz/QuizHeaderSolved';
 
 // Lazy load route components for improved initial load time.
 const ScholarshipCard = React.lazy(() => import('./Components/Dashboard/Dashboard'));
@@ -22,7 +22,8 @@ const SingleCourseCard = React.lazy(() => import('./Components/SingleCourse/Sing
 export default function App({ onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const headerHeight = 64;
-  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  
+  const [courseData, setCourseData] = useState(null);
 
   // Memoize the toggle function to avoid unnecessary re-renders.
   const toggleSidebar = useCallback(() => {
@@ -30,7 +31,7 @@ export default function App({ onLogout }) {
   }, []);
 
   const location = useLocation();
-  const showSidebar2 = ['/questions', '/dashboard' , '/videopage'].includes(location.pathname.toLowerCase());
+  const showSidebar2 = ['/questions', '/quiz' , '/videopage'].includes(location.pathname.toLowerCase());
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -50,7 +51,7 @@ export default function App({ onLogout }) {
       >
         {showSidebar2 ? (
           <Sidebar2 onLogout={onLogout} sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} 
-          selectedCourseId={selectedCourseId}  // Passing the course ID
+          courseData={courseData}   // Passing the course ID
           />
         ) : (
           <Sidebar onLogout={onLogout} sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
@@ -136,7 +137,7 @@ export default function App({ onLogout }) {
                 }}
               >
                    <Routes>
-                  <Route path="/Dashboard" element={<ProtectedRoute element={<ScholarshipCard  />} />} />
+                   <Route path="/quiz" element={<ProtectedRoute element={<ScholarshipCard  />} />} />
                   </Routes>
                  </Box>
               <Box
@@ -149,13 +150,14 @@ export default function App({ onLogout }) {
                 }}
               >
                 <Routes>
-                
-                  <Route path="/courses"  element={<ProtectedRoute element={<CourseList onSelectCourse={setSelectedCourseId} />} />} />
+          
+                  <Route path="/dashboard"  element={<ProtectedRoute element={<CourseList  />} />} />
                   <Route path="/questions" element={<ProtectedRoute element={<TopQuestions />} />} />
+                  <Route path="/questionssolved" element={<ProtectedRoute element={<QuizHeader/>} />} />
                   <Route path="/coursesDetail" element={<ProtectedRoute element={<Courses />} />} />
                   <Route path="/videopage" element={<ProtectedRoute element={<Videopage />} />} />
                   <Route path="/notes" element={<ProtectedRoute element={<Notespage />} />} />
-                  <Route path="/SingleCourse" element={<ProtectedRoute element={<SingleCourseCard />} />} />
+                  <Route path="/SingleCourse" element={<ProtectedRoute element={<SingleCourseCard setCourseData={setCourseData} />} />} />
                 </Routes>
               </Box>
 
@@ -171,6 +173,7 @@ export default function App({ onLogout }) {
               >
                 <Routes>
                   <Route path="/questions" element={<ProtectedRoute element={<TopQuestions />} />} />
+                  <Route path="/questionssolved" element={<ProtectedRoute element={<QuizHeader/>} />} />
                 </Routes>
               </Box>
               <Box
@@ -183,11 +186,11 @@ export default function App({ onLogout }) {
                 }}
               >
                 <Routes>
-                  <Route path="/Dashboard" element={<ProtectedRoute element={<ScholarshipCard />} />} />
-                  <Route path="/courses" element={<ProtectedRoute element={<CourseList onSelectCourse={setSelectedCourseId} />} />} />
+                  <Route path="/quiz" element={<ProtectedRoute element={<ScholarshipCard />} />} />
+                  <Route path="/dashboard" element={<ProtectedRoute element={<CourseList  />} />} />
                   <Route path="/videopage" element={<ProtectedRoute element={<Videopage />} />} />
                   <Route path="/notes" element={<ProtectedRoute element={<Notespage />} />} />
-                  <Route path="/SingleCourse" element={<ProtectedRoute element={<SingleCourseCard />} />} />
+                  <Route path="/SingleCourse" element={<ProtectedRoute element={<SingleCourseCard setCourseData={setCourseData} />} />} />
                 </Routes>
               </Box>
             </Suspense>

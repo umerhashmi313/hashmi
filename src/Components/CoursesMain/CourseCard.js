@@ -1,33 +1,53 @@
 import React, { useCallback } from "react";
-import { Card, CardContent, CardMedia, Typography, Chip, Button, Box } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Box,
+  Chip,
+  Typography,
+  IconButton,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import VideoLibraryOutlinedIcon from "@mui/icons-material/VideoLibrary";
+import ImportContactsOutlinedIcon from "@mui/icons-material/ImportContactsOutlined";
+import QuizOutlinedIcon from "@mui/icons-material/Quiz";
 
-function CourseCard({ course , onSelectCourse }) {
+/*
+  If you have a real image to display (the banner with two women, for instance),
+  import it or use a URL, e.g.:
+  import bannerImage from "../assets/ehshaBanner.png";
+*/
+function truncateCourseName(name = "", maxWords = 2) {
+  const words = name.split(" ");
+  if (words.length <= maxWords) return name;
+  return words.slice(0, maxWords).join(" ") + "...";
+}
+
+function CourseCard({ course }) {
   const navigate = useNavigate();
 
   const handleClick = useCallback(() => {
-    // Navigate to /singlecourse with course id in location state.
-   
     navigate(`/singlecourse`, { state: { courseId: course.id } });
-    onSelectCourse(course.id);
   }, [navigate, course.id]);
 
-  
   return (
     <Card
       onClick={handleClick}
-      key={course.id}
       sx={{
         display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-        padding: "8px",
+        flexDirection: {sm:'row', xs:'column'},
         borderRadius: 3,
         boxShadow: 6,
-        height: "fit-content",
-        width: "auto",
-        marginBottom: "16px",
+       
+        height:{sm:'202px',xs:'fit-content'},
+        justifyContent:'center',
+        alignItems:'center',
+        width:{xs:'100%' , sm:'590px'},
+        // width:'fit-content',
         cursor: "pointer",
+        marginBottom: "16px",
+        overflow: "hidden",
+    
         transition: "transform 0.3s, box-shadow 0.3s",
         "&:hover": {
           transform: "scale(1.02)",
@@ -35,89 +55,105 @@ function CourseCard({ course , onSelectCourse }) {
         },
       }}
     >
-      {/* Course Image */}
-      <CardMedia
+      {/* Left "banner" area */}
+      <Box sx={{
+      width: {sm:'330px', xs:'100%'} ,
+      height:'fit-content',
+       p:{sm:'8px'},
+       pl:{xs:'16px'},
+       pt:{xs:'8px'},
+       alignItems:'center',
+       justifyContent:'center',
+      }}>
+      <Box
         sx={{
-          height: "186px",
-          width: "100%",
-          backgroundColor: "#001F3F",
-          borderRadius: "8px",
+          position: "relative",
+        width:{sm:'310px' , xs:'95%'},
+          height: "180px",
+          background: "linear-gradient(180deg, #0FAFAD 0%, #0B7978 100%)",
+          borderRadius:3
+          // If you have an actual banner image, you can do:
+          // backgroundImage: `url(${bannerImage})`,
+          // backgroundSize: "cover",
+          // backgroundPosition: "center",
         }}
-      />
+      >
+      </Box>
+      </Box>
 
+      {/* Right content area */}
       <CardContent
         sx={{
           display: "flex",
           flexDirection: "row",
-          justifyContent: "space-between",
+          // gap:'8px',
+          padding: "16px",
           width: "100%",
-          gap: "35px",
-          padding: 0,
-          "&:last-child": {
-            paddingBottom: 0,
-          },
+          alignItems:'center',
+          justifyContent:{sm:'space-between', xs: 'center'},
+          gap:'32px',
+          px:'16px'
         }}
       >
+        {/* Top info: Category chip, course name, created by, price */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          {/* Course Category */}
           <Chip
-            label={course.category || "Unknown"}
+            label={course.category || "NMDCAT"}
             sx={{
-              backgroundColor: "#E7F7FF",
-              color: "#0EAAFF",
+              backgroundColor: "#31CEB8",
+              color: "#FFF",
               height: "20px",
+              width: "fit-content",
+              fontSize: "0.75rem",
+            
             }}
           />
 
-          {/* Course Name */}
-          <Typography sx={{ fontSize: "16px", fontWeight: "900" }}>
-            {course.name}
+          <Typography sx={{ fontSize: "18px", fontWeight: "700" }}>
+          {truncateCourseName(course.name) || "Course Name"}
           </Typography>
 
-          {/* Creator */}
           <Typography variant="body2" sx={{ fontSize: "12px" }}>
             Created by <strong>{course.created_by || "Unknown"}</strong>
           </Typography>
 
-          {/* Price */}
-          <Typography variant="h6">Rs. {course.price || "N/A"}</Typography>
+          <Typography variant="h6" sx={{ fontSize: "16px" , fontWeight: "500" }}>
+            Rs. {course.price || "3000"}
+          </Typography>
         </Box>
 
-        {/* Course Stats */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <Button
-            variant="outlined"
-            sx={{
-              height: "fit-content",
-              fontSize: "8px",
-              borderRadius: "16px",
-              color: "black",
-            }}
-          >
-            Total Videos: {course.totalVideos || "0"}
-          </Button>
-          <Button
-            variant="outlined"
-            sx={{
-              height: "fit-content",
-              fontSize: "8px",
-              borderRadius: "16px",
-              color: "black",
-            }}
-          >
-            Total Notes: {course.totalNotes || "0"}
-          </Button>
-          <Button
-            variant="outlined"
-            sx={{
-              height: "fit-content",
-              fontSize: "8px",
-              borderRadius: "16px",
-              color: "black",
-            }}
-          >
-            Total Quizzes: {course.totalQuizzes || "0"}
-          </Button>
+        {/* Bottom row: stats (quiz, videos, notes) */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent:'center',
+            gap:'8px'
+          }}
+        >
+          {/* Quiz */}
+          <Box sx={{ display: "flex",  alignItems: "center", gap: "4px" }}>
+            <QuizOutlinedIcon fontSize="small" sx={{color:"#31CEB8"}} />
+            <Typography variant="body2" sx={{ fontSize: "8px",fontWeight:'400' ,lineHeight:'auto' ,color:"#31CEB8" }}>
+              {course.totalQuiz || 0}/19 Quiz
+            </Typography>
+          </Box>
+
+          {/* Videos */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <VideoLibraryOutlinedIcon fontSize="small" sx={{color:"#31CEB8"}} />
+            <Typography variant="body2" sx={{ fontSize: "8px" , fontWeight:'400' ,lineHeight:'auto' ,color:"#31CEB8"}}>
+              {course.totalVideos || 0}/19 videos
+            </Typography>
+          </Box>
+
+          {/* Notes */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <ImportContactsOutlinedIcon fontSize="small" sx={{color:"#31CEB8"}}/>
+            <Typography variant="body2" sx={{ fontSize: "8px",fontWeight:'400' ,lineHeight:'auto', color:"#31CEB8" }}>
+              {course.totalNotes || 0}/19 Notes
+            </Typography>
+          </Box>
         </Box>
       </CardContent>
     </Card>

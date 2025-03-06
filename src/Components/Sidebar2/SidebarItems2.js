@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -196,25 +196,18 @@ const QuarterHeaderBox = ({ quarter, isSelected, onClick }) => {
       sx={{
         backgroundColor: isSelected ? "#239283" : "transparent",
         color: "white",
-        width: "80%",
-        minHeight: "32px",
+        width: "87%",
         border: "3px solid #239283",
         boxShadow: "0 0 7px 0 #239283",
         margin: "8px 0",
         borderRadius: "8px",
         cursor: "pointer",
-        px: 2,
+        px: 1,
         py: 1,
         display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
+        alignItems: "flex-start",
       }}
     >
-      <Typography
-        sx={{ fontSize: "18px", fontWeight: "500", lineHeight: "140%" }}
-      >
-        {quarter.name}
-      </Typography>
       <ExpandMoreIcon
         sx={{
           color: "white",
@@ -222,6 +215,12 @@ const QuarterHeaderBox = ({ quarter, isSelected, onClick }) => {
           transition: "0.3s",
         }}
       />
+
+      <Typography
+        sx={{ fontSize: "18px", fontWeight: "500", lineHeight: "140%" }}
+      >
+        {quarter.name}
+      </Typography>
     </Box>
   );
 };
@@ -328,42 +327,28 @@ const QuarterAccordion = ({
   );
 };
 
-const AccordionNavigation = ({ selectedCourseId }) => {
+const AccordionNavigation = ({ courseData: propCourseData }) => {
   const [selectedItemId, setSelectedItemId] = useState(null);
   const navigate = useNavigate();
+  const [courseData, setCourseData] = useState(propCourseData);
 
-  // React Query: Fetch course data
-  const fetchCourseData = async () => {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      throw new Error("No auth token found.");
-    }
-    const response = await fetch(
-      `https://backend-lms-xpp7.onrender.com/api/courses/complete-course-outline/?id=${selectedCourseId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
+  // If propCourseData is not provided, try to get it from local storage.
+  useEffect(() => {
+    if (!courseData) {
+      const storedData = localStorage.getItem("courseData");
+      if (storedData) {
+        setCourseData(JSON.parse(storedData));
       }
-    );
-    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-    const data = await response.json();
-    return data[0];
-  };
+    }
+  }, [courseData]);
 
-  const { data: courseData, isLoading, error } = useQuery(
-    ["courseData", selectedCourseId],
-    fetchCourseData
-  );
+  if (!courseData) {
+    return <CircularProgress />;
+  }
 
-  if (isLoading) return <CircularProgress />;
-  if (error || !courseData)
-    return <Typography>Error loading course data.</Typography>;
-
-  // Adjust based on your data structure.
-  const topLevelContent = courseData.sections?.[0]?.ordered_content || [];
+  // Adjust the path if needed – here we assume the sections are on the top-level.
+  const topLevelContent = courseData?.sections?.[0]?.ordered_content || [];
+  console.log('API response:', courseData);
 
   const handleVideoClick = (video) => {
     navigate("/videopage", { state: { video } });
@@ -382,13 +367,8 @@ const AccordionNavigation = ({ selectedCourseId }) => {
         display: "flex",
         flexDirection: "column",
         px: "8px",
-        "&::-webkit-scrollbar": {
-          width: "12px",
-        },
-        "&::-webkit-scrollbar-thumb": {
-          backgroundColor: "red",
-          borderRadius: "6px",
-        },
+        "&::-webkit-scrollbar": { width: "12px" },
+        "&::-webkit-scrollbar-thumb": { backgroundColor: "red", borderRadius: "6px" },
       }}
     >
       {topLevelContent.map((quarter) => (

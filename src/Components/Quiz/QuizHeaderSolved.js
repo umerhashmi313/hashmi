@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { styled } from '@mui/material/styles';
 import {
   Box,
   Typography,
@@ -11,6 +12,8 @@ import {
   MenuItem,
   Button,
   Switch,
+  Chip,
+  Divider
 } from "@mui/material";
 import { PrimaryButton, SecondaryButton } from "../Buttons/Buttons";
 import TourIcon from "@mui/icons-material/Tour";
@@ -19,6 +22,14 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
+
+const BlackDivider = styled(Divider)(({ theme }) => ({
+  background: 'black',
+  height: '0.1px',
+  marginTop:'-30px',
+  // margin: theme.spacing(1, 0),
+  boxShadow: '0 2px 4px rgba(255, 255, 255, 0.79)',
+}));
 
 function QuizHeader({ onOptionSelect }) {
   // Local state for review mode, timer, current question index and filters.
@@ -194,32 +205,43 @@ function QuizHeader({ onOptionSelect }) {
         justifyContent: "center",
         alignItems: "center",
         gap: "16px",
-        width: "100%",
+        maxWidth: "679px",
+        width:{sm:'90vw',xs:'100%'},
+        mx:'auto',
         padding: { xs: "0px", sm: "16px" },
+        // mt:{sm:'110px'}
       }}
     >
+      <Box sx={{width:'100%'}}>
       <Box sx={{
-        width:'100%'
+      
+      backgroundColor:'#03162A',
+      width:'100%',
+      display:'flex',
+      pt:{sm:'16px' ,xs:'8px'},
+       pb:'16px',
+       pl:'16px',
+       pr:'0px',
+       boxSizing:'border-box', 
+      mb:{sm:'-15px',xs:'0' },
+       position: { xs: "fixed", sm: "initial" },
+       top: { xs: "60px", sm: "initial" },
+       left:'0'
+      
+    }}>
+      <Typography sx={{
+        fontSize:'24px',
+        color:'white',
+        fontWeight:600,
+        lineHeight:'20px'
+        
       }}>
-      <Box sx={{
-        backgroundColor:'#03162A',
-        width:'100%',
-        display:'flex',
-        pt:'16px',
-         pb:'16px',
-         pl:'16px',
-         pr:'0px',
-         boxSizing:'border-box'
-      }}>
-        <Typography sx={{
-          fontSize:'24px',
-          color:'white',
-          fontWeight:600,
-          lineHeight:'20px'
-        }}>
-          Quiz Results
-        </Typography>
+        Quiz Results
+      </Typography>
+    </Box>
       </Box>
+   
+     
       {/* Header with score and attempt time */}
       <Box
         sx={{
@@ -233,9 +255,12 @@ function QuizHeader({ onOptionSelect }) {
           boxSizing: "border-box",
           gap: "16px",
           position: { xs: "fixed", sm: "initial" },
-          top: { xs: "60px", sm: "initial" },
+          top: { xs: "110px", sm: "initial" },
+          left:'0'
         }}
       >
+        
+         
         <Box
           sx={{
             display: "flex",
@@ -456,7 +481,7 @@ function QuizHeader({ onOptionSelect }) {
           </FormControl>
         </Box>
       </Box>
-      </Box>
+      
 
       {/* Main Question Display */}
       <Box
@@ -470,7 +495,7 @@ function QuizHeader({ onOptionSelect }) {
           flexDirection: "column",
           width: { xs: "94%", sm: "100%" },
           maxWidth: "686px",
-          margin: "0 auto",
+          margin: {xs:"10% auto" , sm:'0 auto'},
         }}
       >
         <Box
@@ -482,20 +507,23 @@ function QuizHeader({ onOptionSelect }) {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: "2px" }}>
-            <Typography sx={{ fontWeight: "600", fontSize: "14px" }}>
-              Report
-            </Typography>
-            <TourIcon sx={{ color: "#E1004D" }} />
+         
+
+            <Typography sx={{ fontWeight: "600", fontSize: "14px" , backgroundColor:'#239283', color:'white', width:'fit-content', height:'fit-content' , px:'8px' , py:'2px' , borderRadius:1 }}>
+              Easy
+            </Typography> 
+         
+             {/* <TourIcon sx={{ color: "#E1004D" }} /> */}
           </Box>
-          {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <GradeSharpIcon sx={{ height: "21px", color: "yellow" }} />
-            <Typography sx={{ fontWeight: "800", fontSize: "18px" }}>·</Typography>
-            <Typography sx={{ fontWeight: "600", fontSize: "14px" }}>
-              Review
-              <Switch checked={isReviewMode} onChange={handleReviewToggle} />
-            </Typography>
-          </Box> */}
+         
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography sx={{ fontWeight: "600", fontSize: "14px" , backgroundColor:'#239283', color:'white', width:'fit-content', height:'fit-content' , px:'8px' , py:'2px' , borderRadius:1 }}>
+             Q-tag
+            </Typography> 
+          </Box> 
+        
         </Box>
+         {/* <BlackDivider />  */}
 
         <Box
           sx={{
@@ -616,7 +644,7 @@ function QuizHeader({ onOptionSelect }) {
             variant="contained"
             onClick={
               currentQuestionIndex === filteredQuestions.length - 1
-                ? () => navigate("/courses")
+                ? () => navigate("/dashboard")
                 : handleNext
             }
           >

@@ -104,28 +104,30 @@ const TopQuestions = () => {
   });
 
   // Handler for option selection.
-  const handleOptionSelect = (option) => {
+  // Now accepts a second parameter to indicate review mode.
+  const handleOptionSelect = (option, reviewMode) => {
     setSelectedResponses((prevResponses) => {
       const updatedResponses = [...prevResponses];
       const existingIndex = updatedResponses.findIndex(
         (res) => res.question === questions[currentQuestionIndex].id
       );
+      const responseData = {
+        question: questions[currentQuestionIndex].id,
+        selected_option: option.id,
+        is_correct: option.is_correct || false,
+        visibility: true,
+        reviewed: reviewMode, // set based on switch state
+        created_by: Number(localStorage.getItem("userId")),
+        updated_by: Number(localStorage.getItem("userId")),
+      };
+
       if (existingIndex !== -1) {
         updatedResponses[existingIndex] = {
           ...updatedResponses[existingIndex],
-          selected_option: option.id,
-          is_correct: option.is_correct || false,
+          ...responseData,
         };
       } else {
-        updatedResponses.push({
-          question: questions[currentQuestionIndex].id,
-          selected_option: option.id,
-          is_correct: option.is_correct || false,
-          visibility: true,
-          reviewed: true,
-          created_by: Number(localStorage.getItem("userId")),
-          updated_by: Number(localStorage.getItem("userId")),
-        });
+        updatedResponses.push(responseData);
       }
       return updatedResponses;
     });
@@ -152,6 +154,7 @@ const TopQuestions = () => {
       taken_time: new Date().toISOString(),
       responses: selectedResponses,
     };
+    console.log(payload);
     try {
       const token = localStorage.getItem("authToken");
       // Submit quiz responses
@@ -166,6 +169,7 @@ const TopQuestions = () => {
           body: JSON.stringify(payload),
         }
       );
+      
       if (!response.ok) {
         throw new Error("Failed to submit quiz responses");
       }
@@ -251,6 +255,7 @@ const TopQuestions = () => {
       onNext={handleNext}
       onBack={handleBack}
       onQuestionClick={handleQuestionClick}
+      onOptionSelect={handleOptionSelect}
     />
   ) : (
     <QuizHeader

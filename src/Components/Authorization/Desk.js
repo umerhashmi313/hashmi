@@ -38,7 +38,7 @@ const Main = () => {
     setUserRole(role);
 
     // Navigate based on role
-    navigate(role === "admin" ? "/admin-dashboard" : "/courses", { replace: true });
+    navigate(role === "admin" ? "/admin-dashboard" : "/dashboard", { replace: true });
   };
 
   const handleLogout = () => {

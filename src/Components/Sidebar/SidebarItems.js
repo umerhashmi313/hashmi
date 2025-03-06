@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { styled } from '@mui/material/styles';
 import { Box, Typography, Divider } from '@mui/material';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import ExpandLess from '@mui/icons-material/ExpandLess';
 import { navigationData } from './Demo'; // Correct import
 import { useNavigate, useLocation } from 'react-router-dom'; // Import useNavigate and useLocation
 
@@ -16,7 +14,7 @@ const SubheadingSection = styled(Box)(({ theme }) => ({
   fontSize: '14px',
   fontFamily: "'Roboto', sans-serif",
   fontWeight: '600',
-  cursor: 'pointer',
+  cursor: 'default', // No collapse functionality
   userSelect: 'none',
   marginTop: '-4px',
   marginBottom: '-8px',
@@ -28,12 +26,12 @@ const SidebarItem = styled(Box)(({ theme, active }) => ({
   padding: theme.spacing(1),
   cursor: 'pointer',
   transition: 'transform 0.3s ease, background-color 0.3s ease',
-  backgroundColor: active ? '#004b6a' : 'transparent', // Highlight active item
-  color: active ? '#ffffff' : '#b0c4de',
+  backgroundColor:  'transparent', // Active background remains the same
+  color: active ? '#31CEB8' : 'white', // Active text color is now #31CEB8
   '&:hover': {
     transform: 'translateY(-5px)',
     backgroundColor: '#002b47',
-    color: '#ffffff',
+    color: '#31CEB8', // Hover text color also becomes #31CEB8
   },
 }));
 
@@ -61,18 +59,6 @@ function SidebarItems() {
     if (url) navigate(url); // Redirect only if URL exists
   };
 
-  const [expandedSections, setExpandedSections] = useState({
-    Students: true,
-    Instructor: true,
-  });
-
-  const toggleSection = (sectionName) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [sectionName]: !prev[sectionName],
-    }));
-  };
-
   return (
     <Box
       sx={{
@@ -90,31 +76,32 @@ function SidebarItems() {
     >
       {Object.entries(navigationData.Navigation).map(([sectionName, sectionItems]) => (
         <React.Fragment key={sectionName}>
-          <SubheadingSection onClick={() => toggleSection(sectionName)}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          <SubheadingSection>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, fontSize: '14px', lineHeight: '16px', color: '#31CEB8' }}
+            >
               {sectionName.toUpperCase()}
             </Typography>
-            {expandedSections[sectionName] ? <ExpandLess /> : <ExpandMore />}
           </SubheadingSection>
 
-          {expandedSections[sectionName] &&
-            Object.entries(sectionItems).map(([itemName, itemData]) => {
-              const IconComponent = itemData.icon;
-              const isActive = location.pathname === itemData.url; // Check if the current route matches the item's URL
+          {Object.entries(sectionItems).map(([itemName, itemData]) => {
+            const IconComponent = itemData.icon;
+            const isActive = location.pathname === itemData.url; // Check if the current route matches the item's URL
 
-              return (
-                <SidebarItem
-                  key={itemName}
-                  active={isActive}
-                  onClick={() => handleNavigation(itemData.url)}
-                >
-                  <SidebarIcon>
-                    <IconComponent />
-                  </SidebarIcon>
-                  <Typography fontSize="13px">{itemName}</Typography>
-                </SidebarItem>
-              );
-            })}
+            return (
+              <SidebarItem
+                key={itemName}
+                active={isActive}
+                onClick={() => handleNavigation(itemData.url)}
+              >
+                <SidebarIcon>
+                  <IconComponent  />
+                </SidebarIcon>
+                <Typography fontSize="13px" >{itemName}</Typography>
+              </SidebarItem>
+            );
+          })}
 
           <FadedDivider />
         </React.Fragment>

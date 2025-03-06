@@ -98,7 +98,7 @@ function Header({ onLogout }) {
           Course Dashboard
         </Typography>
         <Box display="flex" alignItems="center">
-          {!isMobileView && (
+          {/* {!isMobileView && (
             <Box
               display="flex"
               alignItems="center"
@@ -114,8 +114,8 @@ function Header({ onLogout }) {
               <InputBase placeholder="Search…" sx={{ ml: 1, flex: 1 }} />
               <SearchIcon />
             </Box>
-          )}
-          {isMobileView ? (
+          )} */}
+          {/* {isMobileView ? (
             <IconButton sx={{ color: '#000' }}>
               <SearchIcon />
               <EmojiEventsIcon sx={{ color: 'gold', ml: 1 }} />
@@ -128,10 +128,10 @@ function Header({ onLogout }) {
             >
               Collect Rewards
             </CollectButton>
-          )}
-          <IconButton sx={{ color: '#000' }}>
+          )} */}
+          {/* <IconButton sx={{ color: '#000' }}>
             <NotificationsIcon />
-          </IconButton>
+          </IconButton> */}
           
           {/* Profile Icon with Picture */}
           <IconButton sx={{ cursor: 'pointer' }} onClick={handleClick}>

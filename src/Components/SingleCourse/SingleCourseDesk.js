@@ -1,10 +1,11 @@
-import React from "react";
-import { Card, CardContent, Typography, Avatar, Box, CircularProgress } from "@mui/material";
+// SingleCourseDesk.js
+import React, { useEffect } from "react";
+import { useQuery } from "react-query";
+import { CircularProgress, Card, CardContent, Typography, Box, Avatar } from "@mui/material";
 import AccordionUsage from "./SingleCourse";
 import { useLocation } from "react-router-dom";
-import { useQuery } from "react-query";
 
-const SingleCourseCard = () => {
+const SingleCourseCard = ({ setCourseData }) => {
   const location = useLocation();
   const courseId = location.state?.courseId;
 
@@ -27,13 +28,22 @@ const SingleCourseCard = () => {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
     const data = await response.json();
-    return data[0]; // Assuming the first course is the one needed.
+    return data[0];
   };
 
   const { data: courseData, error, isLoading } = useQuery(['course', courseId], fetchCourseData, {
-    enabled: !!courseId, // Only run if courseId exists.
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes.
+    enabled: !!courseId,
+    staleTime: 5 * 60 * 1000,
   });
+
+  // When data is fetched, save it to local storage and update parent's state.
+  useEffect(() => {
+    if (courseData) {
+      console.log("Fetched courseData:", courseData);
+      localStorage.setItem("courseData", JSON.stringify(courseData));
+      setCourseData(courseData);
+    }
+  }, [courseData, setCourseData]);
 
   if (isLoading) {
     return <CircularProgress />;
@@ -42,28 +52,9 @@ const SingleCourseCard = () => {
     return <Typography>Error loading course data.</Typography>;
   }
 
-  const quizId =
-    courseData.direct_content &&
-    courseData.direct_content.quizzes &&
-    courseData.direct_content.quizzes.length > 0
-      ? courseData.direct_content.quizzes[0].id
-      : null;
-
   return (
-    <Card
-      sx={{
-        maxWidth: "670px",
-        width: "fit-content",
-        borderRadius: 2,
-        boxShadow: 3,
-        boxSizing: "border-box",
-        padding: "16px",
-      }}
-    >
-      {/* Course Image Placeholder */}
+    <Card sx={{ maxWidth: "670px", borderRadius: 2, boxShadow: 3, padding: "16px" }}>
       <Box sx={{ height: 290, bgcolor: "#001F3F", borderRadius: 2 }} />
-
-      {/* Course Details */}
       <CardContent sx={{ paddingX: "0" }}>
         <Typography variant="h5" fontWeight="bold">
           {courseData.course.name}
@@ -71,8 +62,6 @@ const SingleCourseCard = () => {
         <Typography variant="body2" color="text.secondary" mt={2}>
           {courseData.course.description}
         </Typography>
-
-        {/* Instructor Info */}
         <Box display="flex" alignItems="center" mt={2}>
           <Avatar sx={{ bgcolor: "green" }}>B</Avatar>
           <Typography variant="body1" sx={{ ml: 1 }}>
@@ -80,13 +69,11 @@ const SingleCourseCard = () => {
           </Typography>
         </Box>
       </CardContent>
-
-      {/* Course Includes Section */}
       <Typography variant="h6" fontWeight="bold">
         The Course Includes:
       </Typography>
       <Box>
-        <AccordionUsage courseData={courseData} quizId={quizId} />
+        <AccordionUsage courseData={courseData} />
       </Box>
     </Card>
   );

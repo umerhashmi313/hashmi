@@ -30,9 +30,10 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
     updatedCheckedStates[`${currentQuestionIndex}-${optionIndex}`] = true;
     setCheckedStates(updatedCheckedStates);
     console.log(optionValue);
-    onOptionSelect(optionValue);
+    // Pass the review mode flag along with the option value
+    onOptionSelect(optionValue, isReviewMode);
   };
-  
+
   const handleNext = async () => {
     // Check if the current question has an answer
     const isAnswered = Object.keys(checkedStates).some(key => 
@@ -390,12 +391,11 @@ function QuizHeader({ questions, currentQuestionIndex, onNext, onBack, onQuestio
             Back
           </SecondaryButton>
           <PrimaryButton variant="contained" onClick={handleNext} disabled={isSubmitting}>
-  {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"}
-  {isSubmitting && (
-    <CircularProgress size={24} sx={{ color: "white", ml: 1 }} />
-  )}
-</PrimaryButton>
-
+            {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"}
+            {isSubmitting && (
+              <CircularProgress size={24} sx={{ color: "white", ml: 1 }} />
+            )}
+          </PrimaryButton>
         </Box>
       </Box>
     </Box>

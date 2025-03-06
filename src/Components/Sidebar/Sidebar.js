@@ -60,8 +60,6 @@ const SidebarItem = styled(Box)(({ theme }) => ({
 const SidebarItemNoHover = styled(SidebarItem)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-
-
   backgroundColor: ' #03162A',
   transition: 'transform 0.3s ease, background-color 0.3s ease', // Smooth transition for transform and background
   '&:hover': {
@@ -104,6 +102,7 @@ const FooterSection = styled(Box)(({ theme }) => ({
   marginTop: 'auto',
   display: 'flex',
   flexDirection: 'column',
+  marginLeft:'-15px',
   paddingBottom: theme.spacing(1),
   backgroundColor: '#03162A', // Darker background similar to the Insight section
 }));
@@ -142,13 +141,15 @@ export default function Sidebar({ sidebarOpen, toggleSidebar,  onLogout  }) {
     { icon: SettingsIcon, text: 'Settings' },
     { icon: ExitToAppIcon, text: 'Logout' ,onClick: onLogout }
   ].map((item, index) => (
-    <SidebarItemFooter
+    <SidebarItemFooter sx={{
+     
+    }}
     onClick={item.onClick}
     key={index}>
       <SidebarIcon>
         <item.icon />
       </SidebarIcon>
-      <Typography sx={{ fontFamily: "'Roboto', sans-serif" }} fontSize="0.9rem">
+      <Typography sx={{ fontSize:'14px', fontWeight:400 , lineHeight:'16px' }} >
         {item.text}
       </Typography>
     </SidebarItemFooter>
@@ -181,7 +182,7 @@ export default function Sidebar({ sidebarOpen, toggleSidebar,  onLogout  }) {
       ].map((item, index) => (
         <SidebarItem   onClick={item.onClick}
           key={`footer-${index}`}
-          sx={{ ml: '-3px' , mb:'10px' , gap:'3px' }}
+          sx={{ ml: '-10px' , mb:'10px' , gap:'3px' }}
         >
           <SidebarIcon>
             <item.icon />
